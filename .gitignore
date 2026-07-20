@@ -1,0 +1,13 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+
+# End-to-end renderer outputs; keep the JSON test specifications versioned.
+assets/e2e/*.png
+assets/e2e/*.png.layout.json
+assets/e2e/*.png.qa.json
+
+# Temporary local output directories.
+output/
+dist/
+build/

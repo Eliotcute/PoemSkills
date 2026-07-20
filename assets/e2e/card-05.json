@@ -1,0 +1,26 @@
+{
+  "series_id": "attention-notes",
+  "variant_id": "xhs-portrait",
+  "card_number": 5,
+  "canvas_preset": "xhs-portrait",
+  "width": 1242,
+  "height": 1660,
+  "priority": "balanced",
+  "layout": "archive-collage",
+  "cluster_zone": "upper-right",
+  "paper": "pale-white-fiber",
+  "accent": "blue",
+  "title": "稳定来自可重复的小结构",
+  "body": "同一时间、同一地点、同一个开始动作。你不必每天感觉良好，只需要让进入状态的路径足够熟悉。",
+  "assets": [
+    {
+      "type": "relief-print",
+      "subject": "具有重复叶序的单枝植物",
+      "semantic_role": "symbolize-specific-idea",
+      "semantic_reason": "用重复叶序具体象征稳定来自可重复的小结构",
+      "path": null
+    }
+  ],
+  "annotations": ["INDEX / REPEATABLE", "same cue · same entry"],
+  "output": "card-05.png"
+}

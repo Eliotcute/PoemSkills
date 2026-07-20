@@ -1,0 +1,26 @@
+{
+  "series_id": "attention-notes",
+  "variant_id": "xhs-portrait",
+  "card_number": 4,
+  "canvas_preset": "xhs-portrait",
+  "width": 1242,
+  "height": 1660,
+  "priority": "balanced",
+  "layout": "silhouette-field",
+  "cluster_zone": "lower-right",
+  "paper": "pale-white-fiber",
+  "accent": "blue",
+  "title": "记录中断，而不是责备自己",
+  "body": "每次离开任务时，只记下触发点：通知、搜索冲动、疲惫或不确定。重复出现的触发点，就是下一步要改的系统。",
+  "assets": [
+    {
+      "type": "silhouette",
+      "subject": "一条带有数个中断节点的路径",
+      "semantic_role": "sequence",
+      "semantic_reason": "用路径上的节点呈现中断发生的顺序和重复触发点",
+      "path": null
+    }
+  ],
+  "annotations": ["CHECK / INTERRUPTION", "notice · name · adjust"],
+  "output": "card-04.png"
+}

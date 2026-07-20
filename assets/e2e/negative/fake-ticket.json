@@ -1,0 +1,20 @@
+{
+  "canvas_preset": "xhs-portrait",
+  "width": 1242,
+  "height": 1660,
+  "priority": "balanced",
+  "layout": "archive-collage",
+  "cluster_zone": "middle-left",
+  "title": "这是一条用于反例测试的标题",
+  "body": "这段正文只用于确认虚构票据不能因为所谓复古氛围而通过语义与来源校验。",
+  "assets": [
+    {
+      "type": "ticket",
+      "semantic_role": "document",
+      "semantic_reason": "营造复古氛围",
+      "source_basis": "模型虚构的旧船票",
+      "path": "missing-ticket.png"
+    }
+  ],
+  "output": "card.png"
+}

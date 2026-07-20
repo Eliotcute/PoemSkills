@@ -1,0 +1,26 @@
+{
+  "canvas_preset": "xhs-portrait",
+  "width": 1242,
+  "height": 1660,
+  "priority": "balanced",
+  "layout": "quiet-specimen",
+  "cluster_zone": "middle-right",
+  "paper": "pale-white-fiber",
+  "accent": "blue",
+  "title": "真正重要的变化，通常发生得很安静",
+  "body": "把一个模糊的感受写下来：它从什么时候开始，在哪些情境里出现，又在什么时刻发生变化。记录不是为了立刻得出答案，而是让线索逐渐清楚。",
+  "assets": [
+    {
+      "type": "relief-print",
+      "subject": "一株正在展开新叶的植物",
+      "semantic_role": "symbolize-specific-idea",
+      "semantic_reason": "用正在展开的新叶具体象征变化从微小迹象开始",
+      "path": null
+    }
+  ],
+  "annotations": [
+    "FIELD NOTE / CHANGE",
+    "observe · record · compare"
+  ],
+  "output": "card-01.png"
+}

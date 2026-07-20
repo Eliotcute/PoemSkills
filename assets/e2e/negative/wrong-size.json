@@ -1,0 +1,12 @@
+{
+  "canvas_preset": "xhs-portrait",
+  "width": 1080,
+  "height": 1440,
+  "priority": "balanced",
+  "layout": "quiet-specimen",
+  "cluster_zone": "middle-left",
+  "title": "这是一条用于反例测试的标题",
+  "body": "这段正文只用于确认预设画布必须使用规定尺寸，不能把其他尺寸冒充小红书预设。",
+  "assets": [],
+  "output": "card.png"
+}

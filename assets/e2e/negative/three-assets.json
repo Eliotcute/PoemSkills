@@ -1,0 +1,16 @@
+{
+  "canvas_preset": "xhs-portrait",
+  "width": 1242,
+  "height": 1660,
+  "priority": "balanced",
+  "layout": "quiet-specimen",
+  "cluster_zone": "middle-left",
+  "title": "这是一条用于反例测试的标题",
+  "body": "这段正文只用于确认每张卡片不能使用超过两个视觉素材，并保持主题聚焦。",
+  "assets": [
+    {"type": "relief-print", "semantic_role": "explain", "semantic_reason": "解释正文里的第一个具体概念", "path": null},
+    {"type": "silhouette", "semantic_role": "sequence", "semantic_reason": "组织正文里的第二个具体步骤", "path": null},
+    {"type": "color-block", "semantic_role": "compare", "semantic_reason": "对比正文里的第三个具体差异", "path": null}
+  ],
+  "output": "card.png"
+}

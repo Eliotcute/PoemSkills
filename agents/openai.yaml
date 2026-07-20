@@ -1,0 +1,4 @@
+interface:
+  display_name: "诗性档案图文卡片"
+  short_description: "为小红书、公众号及多种横竖版画布生成高级诗性档案图文卡片"
+  default_prompt: "使用 $whole-earth-xhs-cards 把下面内容直接生成指定平台和尺寸的诗性档案图文卡片；每张独立输出，配图必须与内容相关。"

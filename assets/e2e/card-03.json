@@ -1,0 +1,26 @@
+{
+  "series_id": "attention-notes",
+  "variant_id": "xhs-portrait",
+  "card_number": 3,
+  "canvas_preset": "xhs-portrait",
+  "width": 1242,
+  "height": 1660,
+  "priority": "balanced",
+  "layout": "relief-emblem",
+  "cluster_zone": "upper-left",
+  "paper": "pale-white-fiber",
+  "accent": "blue",
+  "title": "环境会替你做一半决定",
+  "body": "把手机移出伸手可及的范围，把当前材料留在桌面。好的环境不是激励你，而是减少选择。",
+  "assets": [
+    {
+      "type": "relief-print",
+      "subject": "一条被清理出单一路径的枝叶",
+      "semantic_role": "explain",
+      "semantic_reason": "用被清理出的单一路径解释环境如何减少无关选择",
+      "path": null
+    }
+  ],
+  "annotations": ["SIGNAL / ENVIRONMENT", "less choice · less friction"],
+  "output": "card-03.png"
+}

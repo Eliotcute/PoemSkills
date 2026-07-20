@@ -1,0 +1,26 @@
+{
+  "series_id": "attention-notes",
+  "variant_id": "xhs-portrait",
+  "card_number": 2,
+  "canvas_preset": "xhs-portrait",
+  "width": 1242,
+  "height": 1660,
+  "priority": "balanced",
+  "layout": "text-led-note",
+  "cluster_zone": "lower-left",
+  "paper": "pale-white-fiber",
+  "accent": "blue",
+  "title": "先把任务缩小到可以开始",
+  "body": "不要写“完成方案”。只写第一个可见动作：打开资料，列出三个问题，给自己二十五分钟。",
+  "assets": [
+    {
+      "type": "color-block",
+      "subject": "一个小型蓝色起点标记",
+      "semantic_role": "sequence",
+      "semantic_reason": "用单一起点标记组织第一步动作，强调开始先于完成",
+      "path": null
+    }
+  ],
+  "annotations": ["TOOL / FIRST MOVE", "one visible action"],
+  "output": "card-02.png"
+}

@@ -1,0 +1,26 @@
+{
+  "series_id": "attention-notes",
+  "variant_id": "xhs-portrait",
+  "card_number": 1,
+  "canvas_preset": "xhs-portrait",
+  "width": 1242,
+  "height": 1660,
+  "priority": "balanced",
+  "layout": "quiet-specimen",
+  "cluster_zone": "middle-right",
+  "paper": "pale-white-fiber",
+  "accent": "blue",
+  "title": "注意力不是意志力的比赛",
+  "body": "它更像一块需要管理的土地。先移走反复打断你的东西，再决定今天只保留哪一个入口。",
+  "assets": [
+    {
+      "type": "relief-print",
+      "subject": "一株从杂乱枝叶中长出的单一主茎",
+      "semantic_role": "symbolize-specific-idea",
+      "semantic_reason": "用单一主茎穿过杂枝，具体象征从干扰中保留一个注意入口",
+      "path": null
+    }
+  ],
+  "annotations": ["FIELD NOTE / ATTENTION", "remove · choose · begin"],
+  "output": "card-01.png"
+}

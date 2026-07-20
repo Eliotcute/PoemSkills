@@ -1,0 +1,26 @@
+{
+  "series_id": "attention-notes",
+  "variant_id": "wechat-cover",
+  "card_number": 1,
+  "canvas_preset": "wechat-cover",
+  "width": 900,
+  "height": 383,
+  "priority": "aesthetic",
+  "layout": "quiet-specimen",
+  "cluster_zone": "middle-right",
+  "paper": "pale-white-fiber",
+  "accent": "blue",
+  "title": "把注意力还给重要的事",
+  "body": "从减少一个入口开始",
+  "assets": [
+    {
+      "type": "relief-print",
+      "subject": "一株只有单一主茎的植物",
+      "semantic_role": "symbolize-specific-idea",
+      "semantic_reason": "用单一主茎具体象征把注意力收回到一个重要入口",
+      "path": null
+    }
+  ],
+  "annotations": ["FIELD NOTE / ATTENTION"],
+  "output": "wechat-cover.png"
+}
