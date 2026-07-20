@@ -21,39 +21,47 @@
 
 ## 当前状态
 
-- 功能可靠性：96/100
-- 多尺寸适配：95/100
-- 视觉接近参考图：76/100
+- 功能可靠性：97/100
+- 多尺寸适配：96/100
+- 真实素材样张视觉评分：85.0–85.5/100
 - 画布回归测试：50/50 通过
-- 本地版本：`v0.2.1`
+- 本地版本：`v0.3.0`
 
-76 分表示当前结果已经干净、可读、可以发布，但仍较明显地由模板和程序化兜底素材驱动。参考图的高级感主要来自具体素材、纸张与印刷质感、图文之间的空间关系，以及整组卡片的人工节奏，这些不能只靠“更多留白”解决。
+`v0.3.0` 不再把像素 QA 当作设计完成：渲染后必须检查完整图和手机预览，十项视觉评分每项至少 8 分、总分至少 85 分才能最终化。照片、木刻和剪影在最终模式中必须有真实素材文件；程序化植物、路径和模拟文档只能用于明确标记的草稿。
 
 ## 快速使用
 
-在仓库所在工作区中告诉 Codex。把 `<仓库路径>` 替换为本仓库实际位置：
+首次测试新风格时，使用样张模式：
 
 ```text
-使用 <仓库路径>/whole-earth-xhs-cards，
-把下面内容生成 6 张小红书 3:4 图文卡片。
+使用 $whole-earth-xhs-cards。
+先区分我提供的内容来源和视觉参考，然后制作两张独立的小红书 3:4 样张：
+一张图片主导，一张文字主导，不要拼在同一张图里。
 
 要求：
 - balanced 模式
 - 浅白纤维莎草纸
 - 低饱和蓝点缀
-- 每张默认一个素材，最多两个
-- 素材必须对应本张具体论点
-- 每张独立输出 PNG
-- 直接生成、运行 QA、检查手机预览，不要只给方案
+- 使用我提供或新生成的主题素材，禁止占位图
+- 运行像素 QA，检查手机预览并完成视觉评分
 
 内容：
 【粘贴内容】
+
+视觉参考：
+【上传参考图】
 ```
 
-安装或桥接到 `${CODEX_HOME:-~/.codex}/skills` 后，可在新任务中使用：
+样张确认后再进入生产模式：
 
 ```text
-使用 $whole-earth-xhs-cards，把这段内容生成 6 张小红书卡片。
+使用 $whole-earth-xhs-cards，沿用刚确认的视觉合同，生产剩余 6 张卡片并最终化。
+```
+
+只需要可粘贴到 ChatGPT 的提示词时必须明确说明：
+
+```text
+使用 $whole-earth-xhs-cards，只输出可复用提示词，不生成图片文件。
 ```
 
 ## 支持规格
@@ -75,15 +83,16 @@
 
 ## 生成流程
 
-1. 将原文拆成卡片序列。
-2. 为每张卡片确定唯一核心论点。
-3. 为素材填写固定语义角色与具体理由。
-4. 优先使用用户素材或生成主题专属的无文字素材。
+1. 区分内容来源与视觉参考。
+2. 把参考图拆成纸张、留白、视觉群、文字轴、素材处理和失败禁区的空间合同。
+3. 将原文拆成卡片序列，并为每张确定唯一核心论点。
+4. 为素材填写语义角色与具体理由，最终模式要求真实文件路径。
 5. 为每张图建立独立 JSON 规格。
 6. 校验规格、系列节奏和素材数量。
-7. 确定性排版中文并输出 PNG。
+7. 确定性排版中文并输出独立 PNG。
 8. 检查安全区、文字碰撞、留白、对比度和手机预览。
-9. 使用视觉评分表进行人工审美验收。
+9. 填写十项视觉评分，修改最低项。
+10. 每项至少 8 分且总分至少 85 分后最终化。
 
 如果设计要求文字进入透明剪影或版画的布局区域，必须在 JSON 中显式声明：
 
@@ -100,10 +109,16 @@
 
 `transparent-only` 不允许文字压住不透明像素；`controlled-overlap` 可以设置小于等于 `0.20` 的保守上限。没有声明的相交仍会被 QA 拒绝。
 
-运行完整流水线：
+渲染和像素 QA：
 
 ```bash
 python3 scripts/run_pipeline.py card-01.json card-02.json card-03.json
+```
+
+检查图片并填写生成的 `*.visual-review.json` 后最终化：
+
+```bash
+python3 scripts/run_pipeline.py --finalize card-01.json card-02.json card-03.json
 ```
 
 运行全部画布与版式回归测试：
@@ -111,6 +126,9 @@ python3 scripts/run_pipeline.py card-01.json card-02.json card-03.json
 ```bash
 python3 scripts/test_matrix.py
 python3 scripts/test_intentional_intersection.py
+python3 scripts/test_typography.py
+python3 scripts/test_asset_gate.py
+python3 scripts/test_visual_review.py
 ```
 
 校验 Skill 结构：
@@ -119,11 +137,11 @@ python3 scripts/test_intentional_intersection.py
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator/scripts/quick_validate.py" .
 ```
 
-## 如何把视觉从 76 分提升到 90 分
+## 如何把视觉从 85 分提升到 90 分
 
 ### 1. 替换程序化占位素材
 
-这是最重要的一步。当前兜底植物和路径只能表达抽象结构，不能承担人物、地点、医学器官、商品、动物或具体事件等主题内容。
+这是最重要的一步。最终模式已经禁止用程序化植物和路径承担主题内容；要继续提升，必须使用更准确、更有材料感的照片、木刻、剪影或真实档案。
 
 优先级：
 
@@ -169,7 +187,7 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator/scripts/quick_
 - 图文关系；
 - 信息密度。
 
-详细的 100 分制验收标准见 [`references/visual-quality-rubric.md`](references/visual-quality-rubric.md)。单张每项至少 8 分，整组至少 85 分，才算稳定达到发布级。当前 76 分基线及逐项得分见 [`references/visual-baseline-v0.2.md`](references/visual-baseline-v0.2.md)。
+详细的 100 分制验收标准见 [`references/visual-quality-rubric.md`](references/visual-quality-rubric.md)。单张每项至少 8 分，整组至少 85 分，才算稳定达到发布级。历史 `v0.2` 的 76 分基线及逐项得分保留在 [`references/visual-baseline-v0.2.md`](references/visual-baseline-v0.2.md)。
 
 ## 核心约束
 
@@ -198,8 +216,12 @@ whole-earth-xhs-cards/
 - `references/illustration-prompts.md`：无文字配图提示词。
 - `scripts/render_card.py`：确定性 PNG 渲染器。
 - `scripts/qa_card.py`：像素和版面 QA。
+- `scripts/validate_visual_review.py`：85 分视觉交付门禁。
 - `scripts/test_matrix.py`：50 组合回归测试。
 - `scripts/test_intentional_intersection.py`：受控相交正反回归测试。
+- `scripts/test_typography.py`：中英文换行与中文微文字测试。
+- `scripts/test_asset_gate.py`：最终素材路径门槛测试。
+- `scripts/test_visual_review.py`：视觉评分门禁测试。
 
 ## 本地 Git
 

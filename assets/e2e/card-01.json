@@ -6,6 +6,7 @@
   "width": 1242,
   "height": 1660,
   "priority": "balanced",
+  "render_mode": "draft",
   "layout": "quiet-specimen",
   "cluster_zone": "middle-right",
   "paper": "pale-white-fiber",

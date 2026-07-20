@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import math
 import random
+import re
 import sys
 from pathlib import Path
 
@@ -40,6 +41,7 @@ MONO_FONTS = [
     "/System/Library/Fonts/Supplemental/Courier New.ttf",
     "/System/Library/Fonts/Supplemental/Georgia.ttf",
 ]
+CLOSING_PUNCTUATION = set("，。！？；：、）》】」』’”」％%!?;:,.])}")
 
 
 def load_font(size: int, family: str = "serif") -> ImageFont.FreeTypeFont:
@@ -50,6 +52,25 @@ def load_font(size: int, family: str = "serif") -> ImageFont.FreeTypeFont:
     return ImageFont.load_default(size=max(8, int(size)))
 
 
+def text_units(paragraph: str) -> list[str]:
+    """Keep Latin identifiers intact while allowing natural CJK character wrapping."""
+    return re.findall(r"[A-Za-z0-9][A-Za-z0-9_.:/+@-]*|[ \t]+|.", paragraph)
+
+
+def split_oversized_unit(draw: ImageDraw.ImageDraw, unit: str, face: ImageFont.ImageFont, max_width: int) -> list[str]:
+    fragments, current = [], ""
+    for char in unit:
+        trial = current + char
+        if current and draw.textlength(trial, font=face) > max_width:
+            fragments.append(current)
+            current = char
+        else:
+            current = trial
+    if current:
+        fragments.append(current)
+    return fragments
+
+
 def wrap_chars(draw: ImageDraw.ImageDraw, text: str, face: ImageFont.ImageFont, max_width: int) -> list[str]:
     lines: list[str] = []
     for paragraph in str(text).splitlines() or [""]:
@@ -57,16 +78,27 @@ def wrap_chars(draw: ImageDraw.ImageDraw, text: str, face: ImageFont.ImageFont, 
             lines.append("")
             continue
         current = ""
-        for char in paragraph:
-            trial = current + char
+        for unit in text_units(paragraph):
+            trial = current + unit
             if current and draw.textlength(trial, font=face) > max_width:
+                if unit in CLOSING_PUNCTUATION:
+                    current = trial
+                    continue
                 lines.append(current.rstrip())
-                current = char.lstrip()
+                current = unit.lstrip()
             else:
                 current = trial
+            if current and draw.textlength(current, font=face) > max_width:
+                fragments = split_oversized_unit(draw, current, face, max_width)
+                lines.extend(fragment.rstrip() for fragment in fragments[:-1])
+                current = fragments[-1]
         if current:
             lines.append(current.rstrip())
     return lines
+
+
+def contains_cjk(value: str) -> bool:
+    return any("\u3400" <= char <= "\u9fff" for char in str(value))
 
 
 def draw_text_block(draw, xy, text, face, fill, max_width, line_gap, max_lines=None):
@@ -127,16 +159,23 @@ def process_photo(path: Path, size: tuple[int, int], paper: tuple[int, int, int]
 
 def process_cutout(path: Path, size: tuple[int, int], color=INK) -> Image.Image:
     im = Image.open(path).convert("RGBA")
+    if im.getextrema()[3] == (255, 255):
+        gray = ImageOps.grayscale(im.convert("RGB"))
+        gray = ImageOps.autocontrast(gray, cutoff=1)
+        alpha = ImageEnhance.Contrast(ImageOps.invert(gray)).enhance(1.22)
+        alpha = alpha.point(lambda value: 0 if value < 12 else value)
+        content_box = alpha.getbbox()
+        if content_box:
+            alpha = alpha.crop(content_box)
+        colored = Image.new("RGBA", im.size, (*color, 255))
+        if content_box:
+            colored = colored.crop(content_box)
+        colored.putalpha(alpha)
+        im = colored
     im.thumbnail(size, Image.Resampling.LANCZOS)
     canvas = Image.new("RGBA", size, (0, 0, 0, 0))
     x = (size[0] - im.width) // 2
     y = (size[1] - im.height) // 2
-    if im.getextrema()[3] == (255, 255):
-        gray = ImageOps.grayscale(im.convert("RGB"))
-        alpha = ImageOps.invert(gray).point(lambda value: 255 if value > 30 else 0)
-        colored = Image.new("RGBA", im.size, (*color, 255))
-        colored.putalpha(alpha)
-        im = colored
     canvas.alpha_composite(im, (x, y))
     return canvas
 
@@ -177,14 +216,16 @@ def programmatic_asset(asset: dict, size: tuple[int, int], accent, seed: int) ->
     return im
 
 
-def get_asset(asset: dict, spec_path: Path, size: tuple[int, int], accent, seed: int, paper=PAPER) -> Image.Image:
+def get_asset(asset: dict, spec_path: Path, size: tuple[int, int], accent, seed: int, render_mode: str, paper=PAPER) -> Image.Image:
     path = asset_path(asset, spec_path)
     kind = asset.get("type", "relief-print")
     if path and path.exists():
         if kind == "mono-photo":
             return process_photo(path, size, paper).convert("RGBA")
         return process_cutout(path, size)
-    return programmatic_asset(asset, size, accent, seed)
+    if kind == "color-block" or render_mode == "draft":
+        return programmatic_asset(asset, size, accent, seed)
+    raise ValueError(f"Final render requires a real asset path for {kind}: {asset.get('subject', 'unnamed asset')}")
 
 
 def layout_anchor(zone: str, width: int, height: int, box_w: int, box_h: int, margin: int) -> tuple[int, int]:
@@ -232,8 +273,9 @@ def render(spec_path: Path) -> tuple[Path, Path]:
     landscape = width > height
     base = short / 1242 if not landscape else short / 900
     priority = cfg.get("priority", "balanced")
-    title_px = int((68 if priority == "readable" else 60 if priority == "balanced" else 50) * max(0.72, base))
-    body_px = int((42 if priority == "readable" else 38 if priority == "balanced" else 34) * max(0.72, base))
+    render_mode = cfg.get("render_mode", "final")
+    title_px = int((58 if priority == "readable" else 52 if priority == "balanced" else 48) * max(0.72, base))
+    body_px = int((38 if priority == "readable" else 34 if priority == "balanced" else 34) * max(0.72, base))
     micro_px = max(15, int(23 * max(0.68, base)))
     title_font = load_font(title_px, "serif")
     body_font = load_font(body_px, "serif")
@@ -309,7 +351,7 @@ def render(spec_path: Path) -> tuple[Path, Path]:
         if index >= len(assets):
             return
         x, y, w, h = box
-        asset_im = get_asset(assets[index], spec_path, (w, h), accent, seed + index * 97)
+        asset_im = get_asset(assets[index], spec_path, (w, h), accent, seed + index * 97, render_mode)
         if opacity != 255:
             asset_im.putalpha(asset_im.getchannel("A").point(lambda v: int(v * opacity / 255)))
         img.alpha_composite(asset_im, (x, y))
@@ -330,72 +372,111 @@ def render(spec_path: Path) -> tuple[Path, Path]:
         asset_im.getchannel("A").save(alpha_path)
         asset_alpha_paths.append(str(alpha_path))
 
-    if layout == "archive-collage":
-        text_w = int(width * (0.40 if landscape else 0.42))
-        tx, ax, text_w = place_two_columns(zone, width, margin, gap, cluster_w, text_w)
-        ay = layout_anchor(zone, width, height, cluster_w, cluster_h, margin)[1]
-        photo_box = (ax, ay, cluster_w, cluster_h)
-        paste_asset(0, photo_box)
+    def portrait_asset_position(box_w: int, box_h: int, default_right: bool = False):
+        centered = zone == "center" or zone.endswith("center")
+        on_right = zone.endswith("right") or (centered and default_right)
+        x = width - margin - box_w if on_right else margin
+        y = layout_anchor(zone, width, height, box_w, box_h, margin)[1]
+        return x, y, on_right
+
+    if landscape:
+        asset_w = int(width * (0.25 if not wide_short else 0.20))
+        asset_h = int(height * (0.50 if not wide_short else 0.56))
+        text_w = int(width * (0.43 if layout == "text-led-note" else 0.38))
+        tx, ax, text_w = place_two_columns(zone, width, margin, gap, asset_w, text_w)
+        ay = layout_anchor(zone, width, height, asset_w, asset_h, margin)[1]
+        ty = max(margin, int(height * (0.25 if layout == "text-led-note" else 0.31)))
+        if layout == "text-led-note":
+            asset_w, asset_h = int(asset_w * 0.45), int(asset_h * 0.52)
+            ax = width - margin - asset_w if tx < width // 2 else margin
+            ay = min(height - margin - asset_h, ty + int(title_px * 1.2))
+        paste_asset(0, (ax, ay, asset_w, asset_h))
         if len(assets) > 1:
-            second = (ax + int(cluster_w * 0.54), ay + int(cluster_h * 0.56), int(cluster_w * 0.58), int(cluster_h * 0.48))
-            paste_asset(1, second)
-        ty = max(margin, ay + int(cluster_h * 0.12))
-        draw_copy(tx, ty, text_w, int(text_w * 0.94), 4, 8)
+            paste_asset(1, (ax + asset_w // 2, ay + asset_h // 2, asset_w // 2, asset_h // 2), 190)
+        draw_copy(tx, ty, text_w, int(text_w * 0.94), 4, 7)
+        if layout in {"archive-collage", "relief-emblem", "quiet-specimen"}:
+            d.line((ax + asset_w // 2, ay + asset_h // 2, tx, ty + title_px), fill=(*MUTED, 105), width=1)
+    elif layout == "archive-collage":
+        asset_w, asset_h = int(width * 0.46), int(height * 0.37)
+        ax, ay, asset_on_right = portrait_asset_position(asset_w, asset_h)
+        text_w = int(width * 0.34)
+        tx = margin if asset_on_right else width - margin - text_w
+        ty = max(margin * 2, ay + int(asset_h * 0.17))
+        paste_asset(0, (ax, ay, asset_w, asset_h))
+        if len(assets) > 1:
+            second_w, second_h = int(asset_w * 0.54), int(asset_h * 0.43)
+            second_x = ax + int(asset_w * 0.06)
+            second_y = min(height - margin - second_h, ay + int(asset_h * 0.78))
+            paste_asset(1, (second_x, second_y, second_w, second_h), 225)
+        draw_copy(tx, ty, text_w, int(text_w * 0.96), 4, 8)
+        rule_y = min(height - margin, ty + int(asset_h * 0.66))
+        d.line((tx, rule_y, tx + text_w, rule_y), fill=(*MUTED, 120), width=1)
     elif layout == "relief-emblem":
-        text_w = int(width * (0.40 if landscape else 0.40))
-        tx, ax, text_w = place_two_columns(zone, width, margin, gap, cluster_w, text_w)
-        ay = layout_anchor(zone, width, height, cluster_w, cluster_h, margin)[1]
-        paste_asset(0, (ax, ay, cluster_w, cluster_h))
+        asset_w, asset_h = int(width * 0.44), int(height * 0.35)
+        ax, ay, asset_on_right = portrait_asset_position(asset_w, asset_h, default_right=True)
+        text_w = int(width * 0.35)
+        tx = margin if asset_on_right else width - margin - text_w
+        ty = max(margin * 2, ay + int(asset_h * 0.22))
+        paste_asset(0, (ax, ay, asset_w, asset_h))
         if len(assets) > 1:
-            paste_asset(1, (ax + int(cluster_w * 0.56), ay + int(cluster_h * 0.58), int(cluster_w * 0.54), int(cluster_h * 0.38)), 210)
-        ty = max(margin * 2, ay + int(cluster_h * 0.18))
-        draw_copy(tx, ty, text_w, int(text_w * 0.94), 4, 8)
-        d.line((ax + cluster_w // 2, ay + cluster_h // 2, tx, ty + title_px), fill=(*MUTED, 110), width=max(1, short // 900))
+            paste_asset(1, (ax + int(asset_w * 0.60), ay + int(asset_h * 0.62), int(asset_w * 0.42), int(asset_h * 0.32)), 190)
+        draw_copy(tx, ty, text_w, int(text_w * 0.95), 4, 8)
+        line_start = ax + asset_w if ax < tx else ax
+        line_end = tx if ax < tx else tx + text_w
+        d.line((line_start, ay + asset_h // 2, line_end, ty + title_px), fill=(*MUTED, 115), width=1)
     elif layout == "silhouette-field":
-        text_w = int(width * (0.40 if landscape else 0.40))
-        tx, ax, text_w = place_two_columns(zone, width, margin, gap, cluster_w, text_w)
-        ay = layout_anchor(zone, width, height, cluster_w, cluster_h, margin)[1]
-        paste_asset(0, (ax, ay, cluster_w, cluster_h))
+        asset_w, asset_h = int(width * 0.36), int(height * 0.29)
+        ax, ay, asset_on_right = portrait_asset_position(asset_w, asset_h, default_right=True)
+        text_w = int(width * 0.46)
+        tx = margin if asset_on_right else width - margin - text_w
+        ty = max(margin * 2, ay + int(asset_h * 0.10))
+        paste_asset(0, (ax, ay, asset_w, asset_h))
         if len(assets) > 1:
-            paste_asset(1, (ax + int(cluster_w * 0.4), ay - int(cluster_h * 0.12), int(cluster_w * 0.66), int(cluster_h * 0.52)), 155)
-        ty = max(margin * 2, ay + int(cluster_h * 0.1))
-        draw_copy(tx, ty, text_w, int(text_w * 0.94), 4, 8)
-        for index in range(3):
-            cx = ax + int(cluster_w * (0.18 + index * 0.34))
-            cy = ay + cluster_h + int(short * 0.035 * (index % 2))
-            d.ellipse((cx - 4, cy - 4, cx + 4, cy + 4), fill=(*accent, 255))
+            paste_asset(1, (ax - int(asset_w * 0.10), ay + int(asset_h * 0.52), int(asset_w * 0.55), int(asset_h * 0.42)), 145)
+        draw_copy(tx, ty, text_w, int(text_w * 0.92), 4, 8)
+        for index, (dx, dy) in enumerate(((0.10, 1.06), (0.52, 1.15), (0.92, 1.02))):
+            cx, cy = ax + int(asset_w * dx), ay + int(asset_h * dy)
+            radius = max(3, short // (270 + index * 30))
+            d.ellipse((cx - radius, cy - radius, cx + radius, cy + radius), fill=(*accent, 235))
     elif layout == "text-led-note":
-        small_w, small_h = int(cluster_w * 0.48), int(cluster_h * 0.52)
-        text_w = int(width * (0.50 if landscape else 0.52))
-        tx, sx, text_w = place_two_columns(zone, width, margin, gap, small_w, text_w)
-        ty = max(margin * 2, int(height * (0.31 if landscape else 0.28)))
-        copy_bottom = draw_copy(tx, ty, text_w, int(text_w * 0.92), 4, 8)
-        sy = min(height - margin - small_h, max(margin, ty + int(title_px * 1.1)))
-        if sy < copy_bottom and sx < tx + text_w and sx + small_w > tx:
-            sy = min(height - margin - small_h, copy_bottom + gap)
+        text_w = int(width * 0.58)
+        tx = margin * 2 if not zone.endswith("right") else width - margin * 2 - text_w
+        ty = max(margin * 3, int(height * (0.28 if zone.startswith("upper") else 0.36 if zone.startswith("middle") or zone == "center" else 0.48)))
+        draw_copy(tx, ty, text_w, int(text_w * 0.92), 4, 8)
+        small_w, small_h = int(width * 0.16), int(height * 0.12)
+        sx = width - margin - small_w if tx < width // 2 else margin
+        sy = min(height - margin - small_h, ty + int(height * 0.36))
         paste_asset(0, (sx, sy, small_w, small_h))
         if len(assets) > 1:
-            paste_asset(1, (sx + small_w // 2, sy + small_h // 2, small_w // 2, small_h // 2), 190)
+            paste_asset(1, (sx + small_w // 2, sy + small_h // 2, small_w // 2, small_h // 2), 175)
+        slash_x = tx + int(text_w * 0.78)
+        slash_y = min(height - margin * 2, ty + int(height * 0.36))
+        d.line((slash_x, slash_y, slash_x + int(short * 0.035), slash_y - int(short * 0.075)), fill=(*INK, 155), width=1)
     else:  # quiet-specimen
-        text_w = int(width * (0.40 if not landscape else 0.40))
-        tx, ax, text_w = place_two_columns(zone, width, margin, gap, cluster_w, text_w)
-        ay = layout_anchor(zone, width, height, cluster_w, cluster_h, margin)[1]
-        paste_asset(0, (ax, ay, cluster_w, cluster_h))
+        asset_w, asset_h = int(width * 0.29), int(height * 0.24)
+        ax, ay, asset_on_right = portrait_asset_position(asset_w, asset_h)
+        text_w = int(width * 0.43)
+        tx = margin if asset_on_right else width - margin - text_w
+        ty = max(margin * 2, ay + int(asset_h * 0.16))
+        paste_asset(0, (ax, ay, asset_w, asset_h))
         if len(assets) > 1:
-            paste_asset(1, (ax + int(cluster_w * 0.62), ay + int(cluster_h * 0.62), int(cluster_w * 0.44), int(cluster_h * 0.40)), 190)
-        ty = int(height * 0.30) if landscape else max(margin * 2, ay + int(cluster_h * 0.10))
+            paste_asset(1, (ax + int(asset_w * 0.68), ay + int(asset_h * 0.62), int(asset_w * 0.38), int(asset_h * 0.34)), 175)
         draw_copy(tx, ty, text_w, int(text_w * 0.94), 4, 8)
+        line_start = ax + asset_w if ax < tx else ax
+        line_end = tx if ax < tx else tx + text_w
+        d.line((line_start, ay + int(asset_h * 0.58), line_end, ty + int(title_px * 0.70)), fill=(*MUTED, 100), width=1)
 
     annotations = [] if compact_canvas else cfg.get("annotations", [])
     bottom_annotation_y = max(margin, height - margin - micro_px)
     positions = [(margin, margin), (width - margin, bottom_annotation_y), (margin, bottom_annotation_y)]
     for index, annotation in enumerate(annotations[:3]):
         px, py = positions[index]
+        annotation_face = load_font(micro_px, "sans" if contains_cjk(annotation) else "mono")
         if index == 1:
-            annotation_width = d.textlength(str(annotation), font=micro_font)
+            annotation_width = d.textlength(str(annotation), font=annotation_face)
             px = max(margin, int(px - annotation_width))
-        box = d.textbbox((px, py), str(annotation), font=micro_font)
-        d.text((px, py), str(annotation), font=micro_font, fill=(*MUTED, 205))
+        box = d.textbbox((px, py), str(annotation), font=annotation_face)
+        d.text((px, py), str(annotation), font=annotation_face, fill=(*MUTED, 205))
         micro_boxes.append(tuple(map(int, box)))
     d.ellipse((margin, margin + micro_px * 1.8, margin + max(5, short // 190), margin + micro_px * 1.8 + max(5, short // 190)), fill=(*accent, 255))
 

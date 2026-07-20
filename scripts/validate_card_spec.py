@@ -9,6 +9,7 @@ from pathlib import Path
 
 
 PRIORITIES = {"aesthetic", "readable", "balanced"}
+RENDER_MODES = {"final", "draft"}
 LAYOUTS = {
     "archive-collage",
     "quiet-specimen",
@@ -71,6 +72,10 @@ def validate(cfg: dict, base_dir: Path | None = None) -> list[str]:
     if priority not in PRIORITIES:
         errors.append(f"priority must be one of {sorted(PRIORITIES)}")
 
+    render_mode = cfg.get("render_mode", "final")
+    if render_mode not in RENDER_MODES:
+        errors.append(f"render_mode must be one of {sorted(RENDER_MODES)}")
+
     layout = cfg.get("layout")
     if layout not in LAYOUTS:
         errors.append(f"layout must be one of {sorted(LAYOUTS)}")
@@ -102,6 +107,7 @@ def validate(cfg: dict, base_dir: Path | None = None) -> list[str]:
                 continue
             if asset.get("type") not in ASSET_TYPES:
                 errors.append(f"assets[{index}].type must be one of {sorted(ASSET_TYPES)}")
+            asset_type = asset.get("type")
             role = str(asset.get("semantic_role", "")).strip()
             reason = str(asset.get("semantic_reason", "")).strip()
             if role not in SEMANTIC_ROLES:
@@ -111,19 +117,24 @@ def validate(cfg: dict, base_dir: Path | None = None) -> list[str]:
             lowered_reason = reason.casefold()
             if any(term in lowered_reason for term in VAGUE_SEMANTIC_TERMS):
                 errors.append(f"assets[{index}].semantic_reason is decorative or vague; bind it to the exact card claim")
-            if asset.get("type") in {"ticket", "document"}:
+            raw_path = asset.get("path")
+            if render_mode == "final" and asset_type in {"mono-photo", "relief-print", "silhouette"} and not raw_path:
+                errors.append(
+                    f"assets[{index}] of type {asset_type} requires a supplied, generated, or licensed file path in final mode"
+                )
+            if raw_path and base_dir is not None:
+                source_path = Path(str(raw_path))
+                source_path = source_path if source_path.is_absolute() else base_dir / source_path
+                if not source_path.exists():
+                    errors.append(f"assets[{index}].path does not exist: {source_path}")
+            if asset_type in {"ticket", "document"}:
                 source_basis = str(asset.get("source_basis", "")).strip()
                 if not source_basis:
-                    errors.append(f"assets[{index}] of type {asset.get('type')} requires source_basis")
+                    errors.append(f"assets[{index}] of type {asset_type} requires source_basis")
                 elif any(term in source_basis.casefold() for term in INVENTED_SOURCE_TERMS):
                     errors.append(f"assets[{index}].source_basis may not be invented or decorative")
-                if not asset.get("path"):
-                    errors.append(f"assets[{index}] of type {asset.get('type')} requires a real supplied/licensed source path")
-                elif base_dir is not None:
-                    source_path = Path(str(asset["path"]))
-                    source_path = source_path if source_path.is_absolute() else base_dir / source_path
-                    if not source_path.exists():
-                        errors.append(f"assets[{index}].path does not exist: {source_path}")
+                if not raw_path:
+                    errors.append(f"assets[{index}] of type {asset_type} requires a real supplied/licensed source path")
 
     intersection = cfg.get("intentional_intersection")
     if intersection is not None:

@@ -6,6 +6,7 @@
   "width": 1242,
   "height": 1660,
   "priority": "balanced",
+  "render_mode": "draft",
   "layout": "text-led-note",
   "cluster_zone": "lower-left",
   "paper": "pale-white-fiber",

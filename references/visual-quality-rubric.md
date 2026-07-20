@@ -6,6 +6,8 @@ Use this rubric after pixel QA. Pixel QA proves that a card fits; this rubric de
 
 Score each category from 0–10. A publish-ready card should score at least 8 in every category and at least 85/100 overall. A series should not be accepted merely because its average passes if one card has an unrelated asset or visibly broken composition.
 
+Record the ten scores in the generated `*.visual-review.json`. Pixel QA and a visually approved review are separate gates. A pending, incomplete, sub-85, or individually sub-8 review is not deliverable.
+
 | Category | 8–10 standard | Common failure |
 |---|---|---|
 | Semantic specificity | Every material is inseparable from the exact claim | A generic bird, leaf, ticket, shell, or path could be swapped in unchanged |
@@ -52,6 +54,7 @@ Choose the highest viable tier:
 7. Inspect the target-size preview.
 8. Score the card with this rubric.
 9. Revise the lowest-scoring category first; do not compensate for an irrelevant image with stronger typography.
+10. Run `scripts/run_pipeline.py --finalize ...`; delivery is allowed only when the visual-review validator passes.
 
 ## Route from 76 to 90+
 

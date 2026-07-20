@@ -6,6 +6,7 @@ __pycache__/
 assets/e2e/*.png
 assets/e2e/*.png.layout.json
 assets/e2e/*.png.qa.json
+assets/e2e/*.png.visual-review.json
 *.png.asset-*.alpha.png
 
 # Temporary local output directories.

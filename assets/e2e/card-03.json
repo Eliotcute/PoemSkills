@@ -6,6 +6,7 @@
   "width": 1242,
   "height": 1660,
   "priority": "balanced",
+  "render_mode": "draft",
   "layout": "relief-emblem",
   "cluster_zone": "upper-left",
   "paper": "pale-white-fiber",

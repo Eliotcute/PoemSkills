@@ -50,6 +50,7 @@ def main() -> int:
                     "width": width,
                     "height": height,
                     "priority": "balanced",
+                    "render_mode": "draft",
                     "layout": layout,
                     "cluster_zone": ZONES[(preset_index + layout_index) % len(ZONES)],
                     "paper": "pale-white-fiber",

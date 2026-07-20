@@ -2,6 +2,22 @@
 
 Use these prompts to generate the image asset only. Typeset all Chinese text afterward.
 
+## Asset brief before prompting
+
+Write these fields before calling an image model:
+
+- exact claim the asset must explain;
+- central subject and required supporting forms;
+- semantic role;
+- intended crop: compact marginal cut, horizontal specimen, vertical branch, or central emblem;
+- desired occupied area in the final card;
+- one-color material treatment;
+- removable background requirement;
+- topic-specific objects that must be present;
+- generic or decorative objects that must not appear.
+
+Do not generate until the asset would fail the “random lighthouse” test: replacing it with an unrelated vintage object must materially weaken the claim.
+
 ## Master prompt — English
 
 ```text
@@ -34,3 +50,16 @@ Append one of these only when needed:
 - `small marginal cut`: compact isolated icon with an irregular edge and at least 35% empty paper around it.
 
 If the result looks too elegant, add: `coarser carving, fewer but thicker cuts, cheaper reproduction, more broken ink edges, less anatomical precision, no fine engraving detail`.
+
+## Rejection checklist
+
+Reject and regenerate when any answer is yes:
+
+1. Could the image illustrate an unrelated topic unchanged?
+2. Is the subject rendered as a smooth icon, polished vector, fine engraving, cute drawing, or 3D object?
+3. Does it contain words, letters, numbers, UI labels, logos, signatures, or watermarks?
+4. Does it contain yellow, beige, dirty, torn, shadowed, or textured paper inside the asset rectangle?
+5. Are there extra props that do not explain the exact card claim?
+6. Is the silhouette unreadable at the intended 14%–28% card size?
+
+Only save accepted assets into the project. Record the final prompt and source path next to the card specification.

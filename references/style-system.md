@@ -45,6 +45,28 @@ Preserve the style while increasing the core text to clear phone-reading scale. 
 
 Use one clearly readable central sentence plus smaller supporting fragments. Use 72%–85% quiet space and a 15%–26% focal cluster. Default to this mode.
 
+## Reference contract
+
+When matching a supplied reference, convert visible decisions into a short contract before writing card specs. Record:
+
+1. `quiet_space`: estimated empty-paper percentage;
+2. `focal_box`: left/center/right, upper/middle/lower, and approximate width/height percentages;
+3. `copy_box`: position, width, title line count, body line count, and alignment axis;
+4. `material`: photo, cutout, relief, document, or text-only;
+5. `relationship`: edge alignment, overlap, threading, connector, interrupted baseline, or deliberate separation;
+6. `micro_system`: indices, true source notes, fine rules, and accent position;
+7. `reject`: the three most visible ways a result could drift from the reference.
+
+Adjectives are not a reference contract. “高级、极简、复古、有呼吸感” must be translated into measurable placement and scale decisions.
+
+For the quiet two-page editorial direction supplied by the user, use these production recipes:
+
+- `image-led editorial`: one topic-specific monochrome asset occupies roughly 38%–48% of width and 28%–40% of height, usually in the middle/lower left or right. Place a restrained title and 3–5 short support lines along one image edge. Keep the opposite upper quadrant nearly empty. Use one thin rule and 1–3 small indices.
+- `text-led editorial`: a 48%–60%-wide copy group floats around 28%–48% of canvas height. Use a two-line core statement and two separated supporting fragments. A tiny asset is optional, never required. Put indices in distant corners and use one small slash or dot to tension the empty field.
+- `material collage`: use a real monochrome photo plus one verified document fragment only when both belong to the same evidence chain. Let one overlap the other; do not arrange them as two equal cards.
+
+These recipes are independent outputs, never two pages placed side by side in one exported image.
+
 ## Layout families
 
 ### `archive-collage`
