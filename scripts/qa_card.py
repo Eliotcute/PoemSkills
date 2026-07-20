@@ -31,6 +31,27 @@ def contrast_ratio(rgb_a, rgb_b):
     return (light + 0.05) / (dark + 0.05)
 
 
+def alpha_overlap_ratio(text_box, asset_box, alpha_path):
+    intersection_box = (
+        max(text_box[0], asset_box[0]),
+        max(text_box[1], asset_box[1]),
+        min(text_box[2], asset_box[2]),
+        min(text_box[3], asset_box[3]),
+    )
+    if intersection_box[0] >= intersection_box[2] or intersection_box[1] >= intersection_box[3]:
+        return 0.0
+    alpha = Image.open(alpha_path).convert("L")
+    local_box = (
+        intersection_box[0] - asset_box[0],
+        intersection_box[1] - asset_box[1],
+        intersection_box[2] - asset_box[0],
+        intersection_box[3] - asset_box[1],
+    )
+    crop = alpha.crop(local_box)
+    opaque_pixels = sum(1 for value in crop.getdata() if value >= 32)
+    return opaque_pixels / max(1, area(text_box))
+
+
 def main() -> int:
     if len(sys.argv) != 3:
         print("Usage: qa_card.py card.json card.png", file=sys.stderr)
@@ -59,11 +80,38 @@ def main() -> int:
         for b in essential[i + 1:]:
             if intersect(a, b) > 0:
                 errors.append(f"essential text overlap: {a} / {b}")
+    intersection_cfg = cfg.get("intentional_intersection") or {}
+    permitted_assets = set(intersection_cfg.get("asset_indices", []))
+    intersection_mode = intersection_cfg.get("mode")
+    default_opaque_limit = 0.0 if intersection_mode == "transparent-only" else 0.08
+    max_opaque_overlap = float(intersection_cfg.get("max_opaque_overlap", default_opaque_limit))
+    asset_boxes = meta.get("asset_boxes", [])
+    opaque_boxes = meta.get("asset_opaque_boxes", asset_boxes)
+    alpha_paths = meta.get("asset_alpha_paths", [])
+    intersection_metrics = []
     for text_box in essential:
-        for asset_box in meta.get("asset_boxes", []):
-            overlap = intersect(text_box, asset_box)
-            if overlap / max(1, area(text_box)) > 0.04:
+        for asset_index, asset_box in enumerate(asset_boxes):
+            layout_ratio = intersect(text_box, asset_box) / max(1, area(text_box))
+            if asset_index < len(alpha_paths) and Path(alpha_paths[asset_index]).exists():
+                opaque_ratio = alpha_overlap_ratio(text_box, asset_box, alpha_paths[asset_index])
+            else:
+                opaque_box = opaque_boxes[asset_index] if asset_index < len(opaque_boxes) else asset_box
+                opaque_ratio = intersect(text_box, opaque_box) / max(1, area(text_box))
+            if asset_index in permitted_assets:
+                intersection_metrics.append({
+                    "asset_index": asset_index,
+                    "layout_overlap": layout_ratio,
+                    "opaque_overlap": opaque_ratio,
+                })
+                if opaque_ratio > max_opaque_overlap:
+                    errors.append(
+                        f"intentional intersection exceeds opaque overlap limit: "
+                        f"asset {asset_index}, {opaque_ratio:.2%} > {max_opaque_overlap:.2%}"
+                    )
+            elif layout_ratio > 0.04:
                 errors.append(f"essential text materially collides with asset: {text_box} / {asset_box}")
+    if intersection_cfg and not any(metric["layout_overlap"] > 0 for metric in intersection_metrics):
+        warnings.append("intentional_intersection is declared but no essential text intersects the selected asset")
     accent = tuple(meta.get("accent_rgb", [61, 98, 112]))
     pixels = list(im.getdata())
     accent_pixels = sum(1 for p in pixels if math.dist(p, accent) < 22)
@@ -98,7 +146,18 @@ def main() -> int:
     preview = im.resize((preview_width, preview_height), Image.Resampling.LANCZOS)
     preview_path = image_path.with_name(image_path.stem + "-preview" + image_path.suffix)
     preview.save(preview_path, quality=94)
-    result = {"valid": not errors, "errors": errors, "warnings": warnings, "metrics": {"accent_ratio": accent_ratio, "bright_ratio": bright_ratio, "essential_contrast": essential_contrast}, "preview": str(preview_path)}
+    result = {
+        "valid": not errors,
+        "errors": errors,
+        "warnings": warnings,
+        "metrics": {
+            "accent_ratio": accent_ratio,
+            "bright_ratio": bright_ratio,
+            "essential_contrast": essential_contrast,
+            "intentional_intersections": intersection_metrics,
+        },
+        "preview": str(preview_path),
+    }
     report_path = image_path.with_suffix(image_path.suffix + ".qa.json")
     report_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(result, ensure_ascii=False, indent=2))

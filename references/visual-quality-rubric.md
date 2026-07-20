@@ -48,9 +48,10 @@ Choose the highest viable tier:
 3. Generate or source the asset without text and without internal paper texture.
 4. Reject the asset if the subject is wrong, generic, overly polished, or stylistically unrelated.
 5. Compose exact Chinese copy with the deterministic renderer.
-6. Inspect the target-size preview.
-7. Score the card with this rubric.
-8. Revise the lowest-scoring category first; do not compensate for an irrelevant image with stronger typography.
+6. If text deliberately enters an asset region, declare the selected asset and opaque-overlap limit in `intentional_intersection`; never disable collision QA globally.
+7. Inspect the target-size preview.
+8. Score the card with this rubric.
+9. Revise the lowest-scoring category first; do not compensate for an irrelevant image with stronger typography.
 
 ## Route from 76 to 90+
 

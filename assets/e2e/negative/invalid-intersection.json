@@ -1,0 +1,26 @@
+{
+  "canvas_preset": "xhs-portrait",
+  "width": 1242,
+  "height": 1660,
+  "priority": "balanced",
+  "layout": "quiet-specimen",
+  "cluster_zone": "middle-left",
+  "title": "这是一条用于反例测试的标题",
+  "body": "这段正文用于确认受控相交不能通过错误素材索引和缺失具体理由绕过碰撞检查。",
+  "assets": [
+    {
+      "type": "relief-print",
+      "subject": "测试素材",
+      "semantic_role": "explain",
+      "semantic_reason": "用于解释受控相交的反例测试内容",
+      "path": null
+    }
+  ],
+  "intentional_intersection": {
+    "mode": "ignore-everything",
+    "reason": "装饰",
+    "asset_indices": [4],
+    "max_opaque_overlap": 0.9
+  },
+  "output": "card.png"
+}

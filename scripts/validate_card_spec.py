@@ -54,6 +54,7 @@ CLUSTER_ZONES = {
     "middle-left", "center", "middle-right",
     "lower-left", "lower-center", "lower-right",
 }
+INTERSECTION_MODES = {"transparent-only", "controlled-overlap"}
 
 
 def chinese_count(value: str) -> int:
@@ -123,6 +124,31 @@ def validate(cfg: dict, base_dir: Path | None = None) -> list[str]:
                     source_path = source_path if source_path.is_absolute() else base_dir / source_path
                     if not source_path.exists():
                         errors.append(f"assets[{index}].path does not exist: {source_path}")
+
+    intersection = cfg.get("intentional_intersection")
+    if intersection is not None:
+        if not isinstance(intersection, dict):
+            errors.append("intentional_intersection must be an object")
+        else:
+            mode = intersection.get("mode")
+            if mode not in INTERSECTION_MODES:
+                errors.append(f"intentional_intersection.mode must be one of {sorted(INTERSECTION_MODES)}")
+            reason = str(intersection.get("reason", "")).strip()
+            if len(reason) < 8:
+                errors.append("intentional_intersection requires a concrete reason of at least 8 characters")
+            if any(term in reason.casefold() for term in VAGUE_SEMANTIC_TERMS):
+                errors.append("intentional_intersection.reason must explain a specific information or composition purpose")
+            asset_indices = intersection.get("asset_indices", [])
+            if not isinstance(asset_indices, list) or not asset_indices:
+                errors.append("intentional_intersection.asset_indices must be a non-empty list")
+            else:
+                for asset_index in asset_indices:
+                    if isinstance(asset_index, bool) or not isinstance(asset_index, int) or asset_index < 0 or asset_index >= len(assets):
+                        errors.append(f"intentional_intersection asset index is invalid: {asset_index}")
+            default_overlap = 0.0 if mode == "transparent-only" else 0.08
+            max_opaque_overlap = intersection.get("max_opaque_overlap", default_overlap)
+            if isinstance(max_opaque_overlap, bool) or not isinstance(max_opaque_overlap, (int, float)) or not 0 <= max_opaque_overlap <= 0.20:
+                errors.append("intentional_intersection.max_opaque_overlap must be between 0 and 0.20")
 
     output = Path(str(cfg.get("output", "")))
     if output.suffix.casefold() != ".png":

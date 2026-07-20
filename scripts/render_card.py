@@ -238,7 +238,7 @@ def render(spec_path: Path) -> tuple[Path, Path]:
     title_font = load_font(title_px, "serif")
     body_font = load_font(body_px, "serif")
     micro_font = load_font(micro_px, "mono")
-    title_boxes, body_boxes, micro_boxes, asset_boxes = [], [], [], []
+    title_boxes, body_boxes, micro_boxes, asset_boxes, asset_opaque_boxes, asset_alpha_paths = [], [], [], [], [], []
     layout = cfg.get("layout", "quiet-specimen")
     zone = cfg.get("cluster_zone", "center")
     assets = cfg.get("assets", [])
@@ -314,6 +314,21 @@ def render(spec_path: Path) -> tuple[Path, Path]:
             asset_im.putalpha(asset_im.getchannel("A").point(lambda v: int(v * opacity / 255)))
         img.alpha_composite(asset_im, (x, y))
         asset_boxes.append((x, y, x + w, y + h))
+        alpha_bbox = asset_im.getchannel("A").getbbox()
+        if alpha_bbox:
+            asset_opaque_boxes.append((
+                x + alpha_bbox[0], y + alpha_bbox[1],
+                x + alpha_bbox[2], y + alpha_bbox[3],
+            ))
+        else:
+            asset_opaque_boxes.append((x, y, x, y))
+        output = Path(cfg["output"])
+        if not output.is_absolute():
+            output = (spec_path.parent / output).resolve()
+        alpha_path = output.with_suffix(output.suffix + f".asset-{index}.alpha.png")
+        alpha_path.parent.mkdir(parents=True, exist_ok=True)
+        asset_im.getchannel("A").save(alpha_path)
+        asset_alpha_paths.append(str(alpha_path))
 
     if layout == "archive-collage":
         text_w = int(width * (0.40 if landscape else 0.42))
@@ -408,6 +423,8 @@ def render(spec_path: Path) -> tuple[Path, Path]:
         "body_boxes": body_boxes,
         "micro_boxes": micro_boxes,
         "asset_boxes": asset_boxes,
+        "asset_opaque_boxes": asset_opaque_boxes,
+        "asset_alpha_paths": asset_alpha_paths,
         "output": str(output),
     }
     meta_path = output.with_suffix(output.suffix + ".layout.json")

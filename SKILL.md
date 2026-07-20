@@ -28,7 +28,7 @@ Create original cards that inherit an editorial system, not a facsimile of a cop
 
 ## Content Contract
 
-Before rendering, produce a UTF-8 JSON file using the schema in `assets/example-card.json`. Required fields are `canvas_preset`, `width`, `height`, `priority`, `layout`, `cluster_zone`, `title`, `body`, and `output`. Set `priority` to `aesthetic`, `readable`, or `balanced`; set `layout` to one of the five supported layouts; list no more than two entries in `assets`. For every asset, use a fixed `semantic_role` from `explain`, `document`, `locate`, `sequence`, `compare`, or `symbolize-specific-idea`, plus a concrete `semantic_reason` tied to the exact claim. Tickets and documents additionally require a real `source_basis` and file `path`.
+Before rendering, produce a UTF-8 JSON file using the schema in `assets/example-card.json`. Required fields are `canvas_preset`, `width`, `height`, `priority`, `layout`, `cluster_zone`, `title`, `body`, and `output`. Set `priority` to `aesthetic`, `readable`, or `balanced`; set `layout` to one of the five supported layouts; list no more than two entries in `assets`. For every asset, use a fixed `semantic_role` from `explain`, `document`, `locate`, `sequence`, `compare`, or `symbolize-specific-idea`, plus a concrete `semantic_reason` tied to the exact claim. Tickets and documents additionally require a real `source_basis` and file `path`. When essential text is deliberately meant to enter an asset's layout region, add `intentional_intersection` with `mode`, `reason`, `asset_indices`, and a conservative `max_opaque_overlap`; otherwise QA treats the overlap as an error.
 
 Run the complete pipeline:
 

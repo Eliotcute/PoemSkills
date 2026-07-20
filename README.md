@@ -10,16 +10,16 @@
 - 多尺寸适配：95/100
 - 视觉接近参考图：76/100
 - 画布回归测试：50/50 通过
-- 本地版本：`v0.1.0`
+- 本地版本：`v0.2.1`
 
 76 分表示当前结果已经干净、可读、可以发布，但仍较明显地由模板和程序化兜底素材驱动。参考图的高级感主要来自具体素材、纸张与印刷质感、图文之间的空间关系，以及整组卡片的人工节奏，这些不能只靠“更多留白”解决。
 
 ## 快速使用
 
-在当前工作区中告诉 Codex：
+在仓库所在工作区中告诉 Codex。把 `<仓库路径>` 替换为本仓库实际位置：
 
 ```text
-使用 /Users/elo/Documents/Codex/whole-earth-xhs-cards，
+使用 <仓库路径>/whole-earth-xhs-cards，
 把下面内容生成 6 张小红书 3:4 图文卡片。
 
 要求：
@@ -35,7 +35,7 @@
 【粘贴内容】
 ```
 
-安装到 Codex Skills 目录后，可在新任务中使用：
+安装或桥接到 `${CODEX_HOME:-~/.codex}/skills` 后，可在新任务中使用：
 
 ```text
 使用 $whole-earth-xhs-cards，把这段内容生成 6 张小红书卡片。
@@ -70,6 +70,21 @@
 8. 检查安全区、文字碰撞、留白、对比度和手机预览。
 9. 使用视觉评分表进行人工审美验收。
 
+如果设计要求文字进入透明剪影或版画的布局区域，必须在 JSON 中显式声明：
+
+```json
+{
+  "intentional_intersection": {
+    "mode": "transparent-only",
+    "reason": "让短句穿过素材透明区域，连接图像与核心论点",
+    "asset_indices": [0],
+    "max_opaque_overlap": 0.0
+  }
+}
+```
+
+`transparent-only` 不允许文字压住不透明像素；`controlled-overlap` 可以设置小于等于 `0.20` 的保守上限。没有声明的相交仍会被 QA 拒绝。
+
 运行完整流水线：
 
 ```bash
@@ -80,12 +95,13 @@ python3 scripts/run_pipeline.py card-01.json card-02.json card-03.json
 
 ```bash
 python3 scripts/test_matrix.py
+python3 scripts/test_intentional_intersection.py
 ```
 
 校验 Skill 结构：
 
 ```bash
-python3 /Users/elo/.codex/skills/.system/skill-creator/scripts/quick_validate.py .
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator/scripts/quick_validate.py" .
 ```
 
 ## 如何把视觉从 76 分提升到 90 分
@@ -138,7 +154,7 @@ python3 /Users/elo/.codex/skills/.system/skill-creator/scripts/quick_validate.py
 - 图文关系；
 - 信息密度。
 
-详细的 100 分制验收标准见 [`references/visual-quality-rubric.md`](references/visual-quality-rubric.md)。单张每项至少 8 分，整组至少 85 分，才算稳定达到发布级。
+详细的 100 分制验收标准见 [`references/visual-quality-rubric.md`](references/visual-quality-rubric.md)。单张每项至少 8 分，整组至少 85 分，才算稳定达到发布级。当前 76 分基线及逐项得分见 [`references/visual-baseline-v0.2.md`](references/visual-baseline-v0.2.md)。
 
 ## 核心约束
 
@@ -168,6 +184,7 @@ whole-earth-xhs-cards/
 - `scripts/render_card.py`：确定性 PNG 渲染器。
 - `scripts/qa_card.py`：像素和版面 QA。
 - `scripts/test_matrix.py`：50 组合回归测试。
+- `scripts/test_intentional_intersection.py`：受控相交正反回归测试。
 
 ## 本地 Git
 
@@ -188,5 +205,5 @@ git commit -m "feat: describe the change"
 发布新的本地版本：
 
 ```bash
-git tag -a v0.2.0 -m "Visual quality rubric and repository documentation"
+git tag -a vX.Y.Z -m "Describe this local release"
 ```
