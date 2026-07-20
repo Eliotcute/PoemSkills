@@ -4,7 +4,7 @@
 
 ## About
 
-`whole-earth-xhs-cards` 是由适之 Shizhi 维护的本地 Codex Skill。项目从 *Whole Earth Catalog* 的独立出版气质、早期互联网的信息组织方式，以及用户提供的极简诗性档案卡片中提取视觉语法，再将它改造成适合中文手机阅读的确定性生产流程。
+`whole-earth-xhs-cards` 是由[适之 Shizhi](https://github.com/Eliotcute)维护的本地 Codex Skill。项目从 *Whole Earth Catalog* 的独立出版气质、早期互联网的信息组织方式，以及用户提供的极简诗性档案卡片中提取视觉语法，再将它改造成适合中文手机阅读的确定性生产流程。
 
 它关注的不是对某张参考图进行像素级复刻，而是建立一套可复用、可检查、可版本管理的编辑设计系统：
 
