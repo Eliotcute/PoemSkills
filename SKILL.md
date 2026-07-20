@@ -11,7 +11,7 @@ Create original cards that inherit an editorial system, not a facsimile of a cop
 
 1. Parse the input into: topic, audience, desired card count, copy-only or image-card output, illustration preference, and call to action.
 2. If visual direction is not sufficiently specified, ask focused questions one at a time or in a very short group. Prioritize: output platform or canvas preset; `aesthetic` / `readable` / `balanced`; preferred asset pairing; accent color or black-and-white; approximate card count. Do not ask questions whose answers are already present. Default to `balanced`, simplified Chinese, and the platform's standard preset. Use Xiaohongshu 3:4 only when the user asks for Xiaohongshu or gives no platform but explicitly asks for social cards.
-3. Read `references/style-system.md` and `references/canvas-presets.md` before composing any card.
+3. Read `references/style-system.md` and `references/canvas-presets.md` before composing any card. Read `references/visual-quality-rubric.md` when generating final images, reviewing visual quality, or matching user references.
 4. Plan the carousel as an alternating visual rhythm. Every card may combine text and imagery, but rotate the dominant weight: image-led → text-led → object-led → diagram-led → image-led → source/recap. Do not split the series into generic “text cards” and “picture cards.”
 5. Choose a content-density mode:
    - `aesthetic`: one readable core sentence of 12–36 Chinese characters; optional nonessential microtext.
@@ -22,7 +22,7 @@ Create original cards that inherit an editorial system, not a facsimile of a cop
 8. Write one JSON spec per final PNG. Validate every spec with `scripts/validate_card_spec.py`, then validate the full sequence with `scripts/validate_series.py`.
 9. Use image generation only for text-free source assets. For topic-bearing relief prints, photographs, objects, animals, anatomy, people, or places, attempt a newly generated or supplied asset first. Use the renderer's programmatic fallback only for abstract structure—sequence, comparison, a simple signal, or a restrained color block—and never present its generic plant/path mark as a bespoke topical illustration.
 10. Render every approved spec with `scripts/render_card.py`. Do not stop after writing a plan or prompt when the user asked for images.
-11. Run `scripts/qa_card.py` against every PNG and inspect its generated phone-size preview. Revise any failed or visually weak export.
+11. Run `scripts/qa_card.py` against every PNG and inspect its generated phone-size preview. Then score the result with `references/visual-quality-rubric.md`; revise the lowest-scoring category first. Do not treat pixel QA as proof of aesthetic quality.
 12. Export each requested canvas as an independent image. Never combine multiple cards, variants, or style samples into one side-by-side sheet.
 13. Deliver one PNG file per card or variant. For Xiaohongshu also deliver title/caption/hashtags; for WeChat deliver article title/summary/alt text; for video/story deliver title/safe-zone copy/description; do not force Xiaohongshu metadata onto other formats.
 
