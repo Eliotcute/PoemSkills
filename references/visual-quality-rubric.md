@@ -10,7 +10,7 @@ Record the ten scores in the generated `*.visual-review.json`. Pixel QA and a vi
 
 | Category | 8–10 standard | Common failure |
 |---|---|---|
-| Semantic specificity | Every material is inseparable from the exact claim | A generic bird, leaf, ticket, shell, or path could be swapped in unchanged |
+| Semantic specificity | The cover promise is source-backed; every card claim and material is inseparable from the source | Attractive fragments replace the argument, or a generic bird, leaf, ticket, shell, or path could be swapped in unchanged |
 | Material quality | Real or newly generated photo, cutout, relief, scan, or purposeful abstract mark has convincing texture | Programmatic placeholder presented as a bespoke illustration |
 | Paper tactility | White at first glance; fibers become visible at close view without yellow cast | Flat digital white or dirty beige parchment |
 | Composition | Image, text, connector, and accent form one focal event | “Text column + icon” placed as separate objects |
@@ -18,7 +18,7 @@ Record the ten scores in the generated `*.visual-review.json`. Pixel QA and a vi
 | Image–text intersection | At least one intentional spatial relationship clarifies meaning | Image and copy merely sit side by side |
 | Negative space | Quiet space creates tension and emphasis rather than emptiness | Everything sits in one predictable middle cluster |
 | Series rhythm | Mechanism, scale, crop, and focal zone vary while the system remains coherent | Six near-identical cards with the same plant or icon |
-| Mobile readability | Core and support copy are readable at target preview size | Essential content survives only when zoomed |
+| Mobile readability | A cover promise is understood in two seconds; interior core and support copy are readable at target preview size | Essential content survives only when zoomed or the cover communicates only a mood |
 | Provenance and restraint | Metadata is verified; no decorative archival fiction | Invented dates, coordinates, ticket numbers, stamps, or routes |
 
 ## Hard gates
@@ -32,6 +32,7 @@ Reject the card or series when any gate fails:
 5. The paper is yellow, beige, stained, burned, heavily distressed, or visibly composed from multiple paper rectangles.
 6. Two cards or variants are combined inside one exported canvas.
 7. Adjacent cards repeat both the same layout family and the same focal zone.
+8. A long source was styled without first extracting a cover promise and one exact claim per interior card.
 
 ## Asset ladder
 

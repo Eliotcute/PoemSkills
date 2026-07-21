@@ -1,4 +1,4 @@
 interface:
-  display_name: "诗性档案图文卡片"
-  short_description: "以参考图合同、主题素材和视觉终审生成独立出版物风格卡片"
-  default_prompt: "使用 $whole-earth-xhs-cards，先区分内容来源与视觉参考，再生成两张独立样张并完成手机预览和视觉评分。"
+  display_name: "内容优先的小红书编辑卡片"
+  short_description: "把长文提炼成封面承诺、逐卡文字稿和浅白纤维纸视觉方案"
+  default_prompt: "使用 $whole-earth-xhs-cards，粘贴一段长文；先输出封面候选与逐卡文字稿，不要立即生成图片。"

@@ -4,6 +4,8 @@
 
 Treat every card as a sparse poetic archive sheet: a small event of image and language floating on tactile pale-white paper. The visual authority comes from restraint, distance, imperfect print matter, and editorial placement—not information density.
 
+Content precedes styling. A Xiaohongshu cover must communicate a source-backed promise in two seconds; interior cards must explain that promise one claim at a time. Sparse composition may never replace the argument.
+
 ## Source observations
 
 The June 1975 catalog supplies the editorial grammar: narrow multi-column text; asymmetric modules; abrupt changes in headline scale; black-and-white photographs, relief prints, diagrams, maps, product cuts, and captions; thin rules; page numbers; and small editorial labels. Adapt that grammar to the user's cleaner material direction: pure-white papyrus instead of yellowed catalog stock.
@@ -45,6 +47,12 @@ Preserve the style while increasing the core text to clear phone-reading scale. 
 
 Use one clearly readable central sentence plus smaller supporting fragments. Use 72%–85% quiet space and a 15%–26% focal cluster. Default to this mode.
 
+## Cover versus interior cards
+
+- `cover`: use 60%–78% quiet space and a 22%–40% focal event. Set an 8–18-character promise across two to four short lines. At 1242 px width, use roughly 68–96 px Chinese type, with an optional 32–44 px subtitle. The cover should be legible at thumbnail size without becoming a half-page commercial headline.
+- `interior`: use the priority-mode ranges above. Keep one 12–28-character proposition plus 35–90 explanatory characters when needed. Interior cards may be text-only.
+- Do not place the source paragraph on the cover. Do not repeat the cover promise as every interior title.
+
 ## Reference contract
 
 When matching a supplied reference, convert visible decisions into a short contract before writing card specs. Record:
@@ -63,6 +71,7 @@ For the quiet two-page editorial direction supplied by the user, use these produ
 
 - `image-led editorial`: one topic-specific monochrome asset occupies roughly 38%–48% of width and 28%–40% of height, usually in the middle/lower left or right. Place a restrained title and 3–5 short support lines along one image edge. Keep the opposite upper quadrant nearly empty. Use one thin rule and 1–3 small indices.
 - `text-led editorial`: a 48%–60%-wide copy group floats around 28%–48% of canvas height. Use a two-line core statement and two separated supporting fragments. A tiny asset is optional, never required. Put indices in distant corners and use one small slash or dot to tension the empty field.
+- `printed symbol`: one rough low-saturation block occupies 20%–30% of canvas width and contains a topic-specific negative-space cutout or symbol. Connect two or three source-backed keywords with hairline rules. Keep the paper clean white and do not inherit the reference's bird, labels, warm cast, or speckled dirt.
 - `material collage`: use a real monochrome photo plus one verified document fragment only when both belong to the same evidence chain. Let one overlap the other; do not arrange them as two equal cards.
 
 These recipes are independent outputs, never two pages placed side by side in one exported image.
@@ -91,7 +100,7 @@ Make one readable Chinese proposition the main event without turning it into a b
 
 ## Image language
 
-Use the supplied bird-among-leaves reference as the image-language anchor.
+Use the supplied references only as material-language anchors. Never use their bird, plants, seascape, ticket, labels, or symbols as default subject matter.
 
 The target is a cheap, tactile relief-print reproduction:
 
@@ -101,7 +110,7 @@ The target is a cheap, tactile relief-print reproduction:
 - Uneven blacks: clogged ink in some areas, dry gaps and white chips in others.
 - Flat silhouette and weak perspective; the subject reads immediately from a distance.
 - Naive but confident anatomy. Do not polish the drawing into a museum-grade natural-history plate.
-- Dense organic framing is welcome: leaves, roots, vessels, tools, wires, stars, or other topic-relevant forms may grow around and through the central subject.
+- Surrounding marks are allowed only when they explain the topic: verified tools, interfaces, body structures, process parts, or other source-backed forms may cross the central subject.
 - Print it on pristine pure-white papyrus paper. The black ink may retain handmade relief-print imperfections, but the paper remains clean, luminous, and elegant.
 - Keep the illustration free of embedded words so Chinese text can be typeset separately.
 
@@ -117,7 +126,7 @@ Reject these common failure modes: precise scientific engraving, hair-thin cross
 - Microtext: 20–27 px, typewriter/monospace appearance, but never place facts the reader must understand only in microtext.
 - Downsample every export to a 375×500 px phone preview. The core sentence must remain comfortably readable without zooming; supporting text must remain decipherable; only atmospheric microtext may become difficult to read.
 - Keep essential text contrast at least 4.5:1 against the paper. Do not use low-opacity gray for essential facts, actions, disclaimers, or source names.
-- Avoid conventional large cover titles. Let scale changes remain subtle: roughly 1.3×–1.8× rather than 3×–5×.
+- On interior cards, avoid conventional poster headlines and keep scale changes around 1.3×–1.8×. On covers, use the dedicated 68–96 px range above and verify two-second thumbnail comprehension.
 - Use short, spatial fragments. Do not set 150 characters as a continuous block.
 
 ## Asset limit

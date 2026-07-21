@@ -1,21 +1,43 @@
 ---
 name: whole-earth-xhs-cards
-description: "Create designed, publish-ready Chinese editorial cards for Xiaohongshu, WeChat, landscape, portrait, and custom canvases. Use when the user asks for 全球概览、Whole Earth Catalog、浅白纤维莎草纸、古典互联网、诗性档案、极简独立出版物、图文卡片、参考图匹配 or high-end editorial collage. Supports prompt-only delivery, two-card style samples, and final PNG production with topic-specific assets, deterministic Chinese typography, phone preview QA, and a mandatory visual-review gate."
+description: "Turn long Chinese source text into content-first Xiaohongshu covers and explanatory editorial card series, then compose publish-ready visuals for Xiaohongshu, WeChat, landscape, portrait, and custom canvases. Use for 长文提炼、封面文案、文字卡片、配图提示词、全球概览、Whole Earth Catalog、浅白纤维莎草纸、古典互联网、诗性档案、极简独立出版物、参考图匹配 or high-end editorial collage. Supports reusable prompts, content plans, one-cover production, explicit style comparisons, topic-specific assets, deterministic Chinese typography, phone preview QA, and a mandatory visual-review gate."
 ---
 
 # Whole Earth Editorial Cards
 
 Create an original editorial system, not a facsimile of a copyrighted page. Never reuse a reference logo, page scan, photograph, ticket, or illustration unless the user supplied it and authorized reuse.
 
-## Route the request
+## Route the deliverable
 
 Choose exactly one mode before working:
 
-1. `prompt-only`: Use only when the user explicitly asks for a reusable ChatGPT/image prompt. Fill `references/master-prompt.md`; do not render files.
-2. `style-sample`: Use for a new visual direction, a supplied reference, or a request to test the Skill. Produce two independent PNGs using real content: one image-led and one text-led. Never combine them in one canvas. Skip this mode only when the user explicitly asks for one sample.
-3. `production`: Use after the user approves the visual system or explicitly asks to proceed directly. Produce the requested full set.
+1. `prompt-only`: Use when the user asks for a reusable ChatGPT/image prompt. Fill `references/master-prompt.md`; deliver one copy-paste prompt plus any source-specific interpretation requested. Do not render files.
+2. `content-plan`: Use when the user supplies long text and asks what the cover or carousel should say, but does not ask for image files. Deliver the editorial brief, cover copy, card script, and asset concepts.
+3. `cover-production`: Use when the user asks for a cover or cover illustration. Produce the requested number of independent covers; default to one, never two.
+4. `style-sample`: Use only when the user explicitly asks to compare styles, test the Skill, or requests two samples. Produce the requested independent variants and never combine them in one canvas.
+5. `series-production`: Use when the user asks for a complete card set or approves the content and visual system. Produce the requested full set.
+
+A supplied reference image controls appearance only. It does not imply `style-sample`, authorize its contents, or change the requested output count.
 
 Do not answer a file-generation request with only strategy, prompts, or JSON.
+
+## Pass the content gate first
+
+When the source is a long passage, an article, a transcript, or a screenshot containing substantial copy, read `references/content-first-workflow.md` before designing. Do not begin with layout selection.
+
+Extract and verify:
+
+- the topic in one sentence;
+- the central change, tension, or question;
+- the reader payoff;
+- the strongest source-backed evidence or example;
+- one cover promise;
+- one exact claim per interior card;
+- facts, names, dates, and claims that must not be invented.
+
+The cover is a promise, not a summary. Interior cards explain that promise. Do not paste the source into a sparse layout, turn every paragraph into poetic fragments, or let aesthetics replace the argument.
+
+For a direct generation request, complete the editorial brief internally and proceed. Otherwise show the brief, cover copy, and card script before generating visuals.
 
 ## Build a reference contract
 
@@ -33,12 +55,29 @@ Do not reduce a reference to adjectives such as “高级、极简、复古.” 
 
 Read `references/style-system.md` and `references/canvas-presets.md` before composing. Read `references/visual-quality-rubric.md` before reviewing or delivering.
 
-## Plan content and rhythm
+For the user's current reference family, distinguish two reusable systems:
+
+- `editorial-explanation`: readable cover or interior copy, one small relevant photo or no image, distant indices, thin rules, and muted blue marks;
+- `printed-symbol`: one rough low-saturation color block containing a topic-specific cutout or negative-space symbol, two or three truthful annotations, and one short Chinese line.
+
+Never reuse the reference bird, seascape, ticket, coordinates, dates, or English labels unless the source content independently supports them.
+
+## Plan the cover and series
 
 1. Parse topic, audience, goal, platform, canvas, card count, content priority, available source assets, illustration preference, accent, and CTA.
 2. Ask at most three questions only when missing choices materially change the result. Defaults for direct requests: simplified Chinese, `balanced`, the named platform preset, clean pale-white fibrous paper, black ink, and one muted blue accent.
-3. Give every card one exact claim. Alternate image-led, text-led, material-led, relief-led, diagram-led, and source/recap mechanisms without repeating both layout and focal zone on adjacent cards.
-4. Default to one visual asset. Use a second only when it performs a separate necessary role.
+3. Write three cover lines from different content angles, select the strongest, and explain the selection in one sentence. Keep cover text source-faithful rather than clickbait.
+4. Give every interior card one exact claim. Order claims so the reader can follow the argument without the original source.
+5. Alternate image-led, text-led, material-led, relief-led, diagram-led, and source/recap mechanisms without repeating both layout and focal zone on adjacent cards.
+6. Default to one visual asset. Use a second only when it performs a separate necessary role.
+
+For Xiaohongshu:
+
+- cover headline: normally 8–18 Chinese characters, two to four short lines;
+- optional cover subtitle: 12–28 Chinese characters;
+- interior core sentence: 12–28 Chinese characters;
+- interior explanation: normally 35–90 Chinese characters in one to three blocks;
+- default series when the user asks for a set without a count: one cover plus five interior cards.
 
 Use these density rules:
 
@@ -65,6 +104,8 @@ When an illustration is needed, read `references/illustration-prompts.md`. Gener
 Write one UTF-8 JSON spec per PNG using `assets/example-card.json`. Required fields are `canvas_preset`, `width`, `height`, `priority`, `layout`, `cluster_zone`, `title`, `body`, and `output`.
 
 Use `"render_mode": "final"` for deliverables and `"render_mode": "draft"` only for explicit layout tests. Preserve deliberate line breaks in title and body. Use no more than two assets.
+
+Mark each specification as `cover` or `interior`. A cover must pass the thumbnail test: at 375 px wide, its promise is understood in two seconds. An interior card must remain useful after the cover is removed.
 
 If essential text deliberately enters an asset region, add `intentional_intersection` with `mode`, `reason`, `asset_indices`, and a conservative `max_opaque_overlap`. Never disable collision QA globally.
 
@@ -103,6 +144,7 @@ python3 scripts/test_visual_review.py
 - Export every card or variant as an independent image at the requested ratio.
 - Never combine samples, variants, or cards in a diptych, grid, contact sheet, or comparison board.
 - For Xiaohongshu, also deliver title options, caption, and hashtags.
+- For prompt-only and content-plan modes, deliver the editorial brief, selected cover line, the exact script for the requested output scope, asset rationale, text-free asset prompt, and final composition prompt. Do not invent interior cards when the user requests only a cover.
 - For WeChat, deliver article title, summary, and alt text.
 - For story/video formats, deliver title, safe-zone copy, and description.
 - Report source paths, generated asset prompts, final PNG paths, previews, QA results, and visual-review scores.
