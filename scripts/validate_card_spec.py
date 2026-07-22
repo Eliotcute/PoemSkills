@@ -10,6 +10,7 @@ from pathlib import Path
 
 PRIORITIES = {"aesthetic", "readable", "balanced"}
 RENDER_MODES = {"final", "draft"}
+CARD_ROLES = {"cover", "interior"}
 LAYOUTS = {
     "archive-collage",
     "quiet-specimen",
@@ -62,11 +63,35 @@ def chinese_count(value: str) -> int:
     return sum("\u4e00" <= ch <= "\u9fff" for ch in value)
 
 
+def normalized_copy(value: str) -> str:
+    return "".join(str(value).split())
+
+
 def validate(cfg: dict, base_dir: Path | None = None) -> list[str]:
     errors: list[str] = []
-    for field in ("canvas_preset", "width", "height", "priority", "layout", "cluster_zone", "title", "body", "output"):
+    for field in (
+        "card_role", "source_ref", "source_excerpt", "card_claim",
+        "canvas_preset", "width", "height", "priority", "layout",
+        "cluster_zone", "title", "body", "output",
+    ):
         if field not in cfg:
             errors.append(f"missing required field: {field}")
+
+    card_role = cfg.get("card_role")
+    if card_role not in CARD_ROLES:
+        errors.append(f"card_role must be one of {sorted(CARD_ROLES)}")
+
+    source_ref = str(cfg.get("source_ref", "")).strip()
+    source_excerpt = str(cfg.get("source_excerpt", "")).strip()
+    card_claim = str(cfg.get("card_claim", "")).strip()
+    if len(source_ref) < 3:
+        errors.append("source_ref must identify the supplied or cited content source")
+    if len(source_excerpt) < 8:
+        errors.append("source_excerpt must quote or faithfully summarize at least 8 characters from the content source")
+    if len(card_claim) < 4:
+        errors.append("card_claim must state this card's exact claim")
+    if card_claim and normalized_copy(card_claim) != normalized_copy(str(cfg.get("title", ""))):
+        errors.append("card_claim must match title after whitespace and line-break normalization")
 
     priority = cfg.get("priority")
     if priority not in PRIORITIES:
@@ -99,6 +124,8 @@ def validate(cfg: dict, base_dir: Path | None = None) -> list[str]:
     if not isinstance(assets, list):
         errors.append("assets must be a list")
     else:
+        if not assets and layout != "text-led-note":
+            errors.append("text-only cards must use text-led-note so asset connectors are not rendered without an asset")
         if len(assets) > 2:
             errors.append("one card may use at most two visual assets")
         for index, asset in enumerate(assets):
@@ -171,16 +198,25 @@ def validate(cfg: dict, base_dir: Path | None = None) -> list[str]:
     title_count = chinese_count(str(cfg.get("title", "")))
     body_count = chinese_count(str(cfg.get("body", "")))
     compact_canvas = min(width, height) <= 600
-    if priority == "aesthetic" and not 12 <= title_count + body_count <= 60:
-        errors.append("aesthetic mode should contain roughly 12–60 essential Chinese characters")
-    if priority == "balanced":
-        if not 8 <= title_count <= 32:
-            errors.append("balanced title/core statement should contain roughly 8–32 Chinese characters")
-        minimum_body = 10 if compact_canvas else 20
-        if not minimum_body <= body_count <= 100:
-            errors.append(f"balanced support copy should contain roughly {minimum_body}–100 Chinese characters for this canvas")
-    if priority == "readable" and not 50 <= title_count + body_count <= 180:
-        errors.append("readable mode should contain roughly 50–180 Chinese characters")
+    if card_role == "cover":
+        if not 8 <= title_count <= 18:
+            errors.append("cover title/promise should contain roughly 8–18 Chinese characters")
+        cover_lines = [line for line in str(cfg.get("title", "")).splitlines() if line.strip()]
+        if preset == "xhs-portrait" and not 2 <= len(cover_lines) <= 4:
+            errors.append("xhs cover title must declare two to four deliberate lines")
+        if body_count and not 12 <= body_count <= 28:
+            errors.append("optional cover subtitle should contain roughly 12–28 Chinese characters")
+    else:
+        if priority == "aesthetic" and not 12 <= title_count + body_count <= 60:
+            errors.append("aesthetic mode should contain roughly 12–60 essential Chinese characters")
+        if priority == "balanced":
+            if not 8 <= title_count <= 32:
+                errors.append("balanced title/core statement should contain roughly 8–32 Chinese characters")
+            minimum_body = 10 if compact_canvas else 20
+            if not minimum_body <= body_count <= 100:
+                errors.append(f"balanced support copy should contain roughly {minimum_body}–100 Chinese characters for this canvas")
+        if priority == "readable" and not 50 <= title_count + body_count <= 180:
+            errors.append("readable mode should contain roughly 50–180 Chinese characters")
 
     return errors
 

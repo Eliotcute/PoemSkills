@@ -82,7 +82,16 @@ def wrap_chars(draw: ImageDraw.ImageDraw, text: str, face: ImageFont.ImageFont, 
             trial = current + unit
             if current and draw.textlength(trial, font=face) > max_width:
                 if unit in CLOSING_PUNCTUATION:
-                    current = trial
+                    previous_units = [value for value in text_units(current.rstrip()) if value]
+                    tail = previous_units.pop() if previous_units else ""
+                    head = "".join(previous_units).rstrip()
+                    if head:
+                        lines.append(head)
+                    current = tail + unit
+                    if draw.textlength(current, font=face) > max_width:
+                        fragments = split_oversized_unit(draw, current, face, max_width)
+                        lines.extend(fragment.rstrip() for fragment in fragments[:-1])
+                        current = fragments[-1]
                     continue
                 lines.append(current.rstrip())
                 current = unit.lstrip()
@@ -274,8 +283,13 @@ def render(spec_path: Path) -> tuple[Path, Path]:
     base = short / 1242 if not landscape else short / 900
     priority = cfg.get("priority", "balanced")
     render_mode = cfg.get("render_mode", "final")
-    title_px = int((58 if priority == "readable" else 52 if priority == "balanced" else 48) * max(0.72, base))
-    body_px = int((38 if priority == "readable" else 34 if priority == "balanced" else 34) * max(0.72, base))
+    card_role = cfg["card_role"]
+    if card_role == "cover":
+        title_px = int((88 if priority == "readable" else 82 if priority == "balanced" else 72) * max(0.72, base))
+        body_px = int((44 if priority == "readable" else 40 if priority == "balanced" else 36) * max(0.72, base))
+    else:
+        title_px = int((58 if priority == "readable" else 52 if priority == "balanced" else 48) * max(0.72, base))
+        body_px = int((38 if priority == "readable" else 34 if priority == "balanced" else 34) * max(0.72, base))
     micro_px = max(15, int(23 * max(0.68, base)))
     title_font = load_font(title_px, "serif")
     body_font = load_font(body_px, "serif")
@@ -494,6 +508,7 @@ def render(spec_path: Path) -> tuple[Path, Path]:
         "canvas": {"width": width, "height": height, "preset": cfg["canvas_preset"]},
         "safe_area": safe,
         "priority": priority,
+        "card_role": card_role,
         "layout": layout,
         "cluster_zone": zone,
         "asset_count": len(assets),

@@ -19,6 +19,10 @@ def write_case(root: Path, name: str, asset_path: Path, mode: str, limit: float)
     image_path = root / f"{name}.png"
     Image.new("RGB", (400, 400), "#FAFAF7").save(image_path)
     spec = {
+        "card_role": "interior",
+        "source_ref": "受控相交测试原文",
+        "source_excerpt": "文字只能进入素材透明区域，不能遮挡大面积不透明内容。",
+        "card_claim": "受控相交必须保持正文清楚",
         "canvas_preset": "custom",
         "width": 400,
         "height": 400,

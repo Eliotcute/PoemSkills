@@ -43,6 +43,10 @@ def main() -> int:
                     title = "把复杂问题缩小到今天能够开始"
                     body = "先保留一个清楚入口，再完成一个可以看见的动作。稳定往往来自更少选择，以及能够重复的小结构。"
                 spec = {
+                    "card_role": "interior",
+                    "source_ref": "画布矩阵测试原文",
+                    "source_excerpt": "减少选择并保留一个入口，会让具体行动更容易开始。",
+                    "card_claim": title,
                     "series_id": "matrix",
                     "variant_id": case_id,
                     "card_number": 1,

@@ -12,8 +12,18 @@ def main() -> int:
     if len(sys.argv) < 3:
         print("Usage: validate_series.py card-01.json card-02.json [...]", file=sys.stderr)
         return 2
-    cards = [json.loads(Path(name).read_text(encoding="utf-8")) for name in sys.argv[1:]]
+    spec_paths = [Path(name).resolve() for name in sys.argv[1:]]
+    cards = [json.loads(path.read_text(encoding="utf-8")) for path in spec_paths]
     errors: list[str] = []
+    output_owners: dict[Path, int] = {}
+    for position, (spec_path, card) in enumerate(zip(spec_paths, cards), start=1):
+        output = Path(str(card.get("output", "")))
+        output = output if output.is_absolute() else (spec_path.parent / output).resolve()
+        previous = output_owners.get(output)
+        if previous is not None:
+            errors.append(f"inputs {previous} and {position} reuse output path {output}")
+        else:
+            output_owners[output] = position
     grouped: dict[tuple, list[tuple[int, dict]]] = {}
     for position, card in enumerate(cards, start=1):
         series_id = card.get("series_id", "default-series")
@@ -28,15 +38,14 @@ def main() -> int:
         positions = [item[0] for item in entries]
         for index in range(1, len(variant_cards)):
             current, previous = variant_cards[index], variant_cards[index - 1]
-            if current.get("layout") == previous.get("layout"):
+            if (
+                current.get("layout") == previous.get("layout")
+                and current.get("cluster_zone")
+                and current.get("cluster_zone") == previous.get("cluster_zone")
+            ):
                 errors.append(
                     f"series {series_id} variant {variant_id}: inputs {positions[index - 1]} and {positions[index]} "
-                    f"repeat layout {current.get('layout')}"
-                )
-            if current.get("cluster_zone") and current.get("cluster_zone") == previous.get("cluster_zone"):
-                errors.append(
-                    f"series {series_id} variant {variant_id}: inputs {positions[index - 1]} and {positions[index]} "
-                    f"repeat cluster_zone {current.get('cluster_zone')}"
+                    f"repeat both layout {current.get('layout')} and cluster_zone {current.get('cluster_zone')}"
                 )
         accents = {card.get("accent", "none") for card in variant_cards}
         papers = {card.get("paper", "pale-white-fiber") for card in variant_cards}

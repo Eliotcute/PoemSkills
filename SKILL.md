@@ -101,7 +101,9 @@ When an illustration is needed, read `references/illustration-prompts.md`. Gener
 
 ## Write card specifications
 
-Write one UTF-8 JSON spec per PNG using `assets/example-card.json`. Required fields are `canvas_preset`, `width`, `height`, `priority`, `layout`, `cluster_zone`, `title`, `body`, and `output`.
+Write one UTF-8 JSON spec per PNG using `assets/example-card.json`. Required content fields are `card_role`, `source_ref`, `source_excerpt`, and `card_claim`. Required rendering fields are `canvas_preset`, `width`, `height`, `priority`, `layout`, `cluster_zone`, `title`, `body`, and `output`. `card_claim` must match the rendered title after whitespace and line-break normalization.
+
+The executable contract can prove that a source is named, an excerpt is recorded, and the planned claim matches the rendered title. It cannot prove that the excerpt is true or that the claim is a fair interpretation; verify those editorial judgments against the supplied source before writing the specification.
 
 Use `"render_mode": "final"` for deliverables and `"render_mode": "draft"` only for explicit layout tests. Preserve deliberate line breaks in title and body. Use no more than two assets.
 
@@ -137,6 +139,9 @@ python3 scripts/test_intentional_intersection.py
 python3 scripts/test_typography.py
 python3 scripts/test_asset_gate.py
 python3 scripts/test_visual_review.py
+python3 scripts/test_content_contract.py
+python3 scripts/test_series_contract.py
+python3 scripts/test_finalize_integrity.py
 ```
 
 ## Deliver

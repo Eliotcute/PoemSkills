@@ -1,4 +1,8 @@
 {
+  "card_role": "interior",
+  "source_ref": "反例测试原文",
+  "source_excerpt": "原文没有出现任何票据、路线或旅行内容。",
+  "card_claim": "这是一条用于反例测试的标题",
   "canvas_preset": "xhs-portrait",
   "width": 1242,
   "height": 1660,

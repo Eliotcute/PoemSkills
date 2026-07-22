@@ -33,6 +33,8 @@ def file_digest(path: Path) -> str:
 
 def validate(review: dict) -> list[str]:
     errors: list[str] = []
+    if review.get("status") != "approved":
+        errors.append("status must be approved after visual inspection")
     for field, digest_field in (("image", "image_sha256"), ("preview", "preview_sha256")):
         raw_path = str(review.get(field, "")).strip()
         expected_digest = str(review.get(digest_field, "")).strip()
@@ -60,8 +62,13 @@ def validate(review: dict) -> list[str]:
         errors.append(f"visual gate failed: total is {sum(numeric_scores):.1f}, requires at least 85")
     if review.get("approved") is not True:
         errors.append("approved must be true after inspecting the full image and phone preview")
-    if review.get("lowest_category") not in CATEGORIES:
+    lowest_category = review.get("lowest_category")
+    if lowest_category not in CATEGORIES:
         errors.append("lowest_category must name one scored category")
+    elif len(numeric_scores) == len(CATEGORIES):
+        minimum_score = min(numeric_scores)
+        if float(scores[lowest_category]) != minimum_score:
+            errors.append("lowest_category must name a category with the actual minimum score")
     if len(str(review.get("revision_summary", "")).strip()) < 12:
         errors.append("revision_summary must state what was inspected or revised")
     return errors

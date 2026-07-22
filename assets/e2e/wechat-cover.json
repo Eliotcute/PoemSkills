@@ -1,4 +1,8 @@
 {
+  "card_role": "cover",
+  "source_ref": "注意力管理示例原文",
+  "source_excerpt": "减少无关入口，可以把注意力重新还给真正重要的事情。",
+  "card_claim": "把注意力还给重要的事",
   "series_id": "attention-notes",
   "variant_id": "wechat-cover",
   "card_number": 1,
@@ -12,7 +16,7 @@
   "paper": "pale-white-fiber",
   "accent": "blue",
   "title": "把注意力还给重要的事",
-  "body": "从减少一个入口开始",
+  "body": "从减少一个无关入口开始管理注意力",
   "assets": [
     {
       "type": "relief-print",

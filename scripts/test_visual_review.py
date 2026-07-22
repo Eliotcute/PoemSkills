@@ -17,6 +17,7 @@ def digest(path: Path) -> str:
 
 def review(score: float, image: Path, preview: Path, approved: bool = True) -> dict:
     return {
+        "status": "approved" if approved else "pending",
         "image": str(image),
         "preview": str(preview),
         "image_sha256": digest(image),
@@ -39,6 +40,10 @@ def main() -> int:
         low_category["scores"]["material_quality"] = 7
         low_total = review(8, image, preview)
         pending = review(9, image, preview, approved=False)
+        pending_but_approved = review(9, image, preview)
+        pending_but_approved["status"] = "pending"
+        wrong_lowest = review(8.5, image, preview)
+        wrong_lowest["scores"]["material_quality"] = 8
         stale = review(9, image, preview)
         image.write_bytes(b"changed")
         stale_errors = validate(stale)
@@ -49,6 +54,8 @@ def main() -> int:
             and bool(validate(low_category))
             and bool(validate(low_total))
             and bool(validate(pending))
+            and bool(validate(pending_but_approved))
+            and bool(validate(wrong_lowest))
             and bool(stale_errors)
         )
         print(json.dumps({
@@ -57,6 +64,8 @@ def main() -> int:
             "low_category_rejected": bool(validate(low_category)),
             "low_total_rejected": bool(validate(low_total)),
             "pending_rejected": bool(validate(pending)),
+            "pending_status_rejected": bool(validate(pending_but_approved)),
+            "wrong_lowest_rejected": bool(validate(wrong_lowest)),
             "stale_review_rejected": bool(stale_errors),
         }, ensure_ascii=False, indent=2))
         return 0 if valid else 1

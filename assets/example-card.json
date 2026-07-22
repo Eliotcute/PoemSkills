@@ -1,4 +1,8 @@
 {
+  "card_role": "interior",
+  "source_ref": "用户提供的变化观察原文",
+  "source_excerpt": "记录不是为了立刻得出答案，而是让线索逐渐清楚。",
+  "card_claim": "真正重要的变化，通常发生得很安静",
   "canvas_preset": "xhs-portrait",
   "width": 1242,
   "height": 1660,

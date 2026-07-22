@@ -1,4 +1,8 @@
 {
+  "card_role": "interior",
+  "source_ref": "注意力管理示例原文",
+  "source_excerpt": "每次离开任务时记录触发点，重复出现的触发点就是要修改的系统。",
+  "card_claim": "记录中断，而不是责备自己",
   "series_id": "attention-notes",
   "variant_id": "xhs-portrait",
   "card_number": 4,

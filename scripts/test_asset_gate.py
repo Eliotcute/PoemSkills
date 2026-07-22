@@ -14,6 +14,10 @@ from validate_card_spec import validate
 
 def base_spec() -> dict:
     return {
+        "card_role": "interior",
+        "source_ref": "浏览器代理测试原文",
+        "source_excerpt": "代理会打开来源、采集信息、截图并把结果填写到表单。",
+        "card_claim": "浏览器代理开始执行网页任务",
         "canvas_preset": "xhs-portrait",
         "width": 1242,
         "height": 1660,

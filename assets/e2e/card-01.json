@@ -1,4 +1,8 @@
 {
+  "card_role": "cover",
+  "source_ref": "注意力管理示例原文",
+  "source_excerpt": "注意力更像一块需要管理的土地，应先移走反复打断你的东西。",
+  "card_claim": "注意力不是意志力的比赛",
   "series_id": "attention-notes",
   "variant_id": "xhs-portrait",
   "card_number": 1,
@@ -11,8 +15,8 @@
   "cluster_zone": "middle-right",
   "paper": "pale-white-fiber",
   "accent": "blue",
-  "title": "注意力不是意志力的比赛",
-  "body": "它更像一块需要管理的土地。先移走反复打断你的东西，再决定今天只保留哪一个入口。",
+  "title": "注意力不是\n意志力的比赛",
+  "body": "从移走干扰开始，重新管理自己的注意力",
   "assets": [
     {
       "type": "relief-print",

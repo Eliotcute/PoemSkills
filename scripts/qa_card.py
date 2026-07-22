@@ -4,12 +4,21 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import math
 import sys
 import unicodedata
 from pathlib import Path
 
 from PIL import Image
+
+
+def file_digest(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def intersect(a, b):
@@ -124,6 +133,8 @@ def main() -> int:
     short = min(im.size)
     minimum_title = max(28, int(short * 0.038))
     minimum_body = max(22, int(short * 0.027))
+    if cfg.get("card_role") == "cover":
+        minimum_title = max(minimum_title, int(68 * short / 1242))
     if meta["font_sizes"]["title"] < minimum_title:
         errors.append(f"title font too small: {meta['font_sizes']['title']} < {minimum_title}")
     if meta["font_sizes"]["body"] < minimum_body:
@@ -146,14 +157,21 @@ def main() -> int:
     preview = im.resize((preview_width, preview_height), Image.Resampling.LANCZOS)
     preview_path = image_path.with_name(image_path.stem + "-preview" + image_path.suffix)
     preview.save(preview_path, quality=94)
+    thumbnail_title_px = meta["font_sizes"]["title"] * preview_width / im.width
+    if cfg.get("card_role") == "cover" and thumbnail_title_px < 20:
+        errors.append(f"cover title too small at thumbnail width: {thumbnail_title_px:.1f}px < 20px")
     result = {
         "valid": not errors,
+        "spec_sha256": file_digest(spec_path),
+        "image_sha256": file_digest(image_path),
+        "preview_sha256": file_digest(preview_path),
         "errors": errors,
         "warnings": warnings,
         "metrics": {
             "accent_ratio": accent_ratio,
             "bright_ratio": bright_ratio,
             "essential_contrast": essential_contrast,
+            "thumbnail_title_px": thumbnail_title_px,
             "intentional_intersections": intersection_metrics,
         },
         "preview": str(preview_path),
