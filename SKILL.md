@@ -3,7 +3,7 @@ name: poemskills
 description: "Turn long Chinese source text into content-first Xiaohongshu covers and explanatory editorial card series with a poetic archival print language, then compose publish-ready visuals for Xiaohongshu, WeChat, landscape, portrait, and custom canvases. Use for PoemSkills、诗歌 Skills、长文提炼、封面文案、文字卡片、配图提示词、全球概览、Whole Earth Catalog、浅白纤维莎草纸、古典互联网、诗性档案、极简独立出版物、参考图匹配 or high-end editorial collage. This is an editorial card skill, not a generic poetry-writing skill. Supports reusable prompts, content plans, one-cover production, explicit style comparisons, topic-specific assets, deterministic Chinese typography, phone preview QA, and a mandatory visual-review gate."
 ---
 
-# PoemSkills Editorial Cards
+# PoemSkills 诗歌图文卡片
 
 Create an original editorial system, not a facsimile of a copyrighted page. Never reuse a reference logo, page scan, photograph, ticket, or illustration unless the user supplied it and authorized reuse.
 
