@@ -1,4 +1,4 @@
 interface:
-  display_name: "内容优先的小红书编辑卡片"
-  short_description: "把长文提炼成封面承诺、逐卡文字稿和浅白纤维纸视觉方案"
-  default_prompt: "使用 $whole-earth-xhs-cards，粘贴一段长文；先输出封面候选与逐卡文字稿，不要立即生成图片。"
+  display_name: "PoemSkills 诗歌图文卡片"
+  short_description: "把长文提炼成有诗歌感的小红书封面、文字卡片和主题配图"
+  default_prompt: "使用 $poemskills，粘贴一段长文；先输出封面候选与逐卡文字稿，不要立即生成图片。"
