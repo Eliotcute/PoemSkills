@@ -1,0 +1,4 @@
+interface:
+  display_name: "Poem Render 卡片生成"
+  short_description: "把 PoemSkills CardSpec 渲染为独立 PNG、预览和像素 QA"
+  default_prompt: "使用 $poem-render，把已确认的 PoemSkills CardSpec 渲染为独立图片。"

@@ -1,4 +1,4 @@
-# Whole Earth–inspired card system
+# PoemSkills visual system
 
 ## Visual thesis
 
@@ -6,9 +6,9 @@ Treat every card as a sparse poetic archive sheet: a small event of image and la
 
 Content precedes styling. A Xiaohongshu cover must communicate a source-backed promise in two seconds; interior cards must explain that promise one claim at a time. Sparse composition may never replace the argument.
 
-## Source observations
+## Design language
 
-The June 1975 catalog supplies the editorial grammar: narrow multi-column text; asymmetric modules; abrupt changes in headline scale; black-and-white photographs, relief prints, diagrams, maps, product cuts, and captions; thin rules; page numbers; and small editorial labels. Adapt that grammar to the user's cleaner material direction: pure-white papyrus instead of yellowed catalog stock.
+Use a content-driven editorial grammar: asymmetric but purposeful modules, clear changes in type scale, topic-specific photographs or relief prints, thin rules, indices, and restrained metadata. The system is original to PoemSkills and should respond to the supplied content and references rather than imitate a named publication.
 
 ## Palette
 
@@ -132,6 +132,8 @@ Reject these common failure modes: precise scientific engraving, hair-thin cross
 ## Asset limit
 
 Use at most two of these on one card: monochrome photo, ticket/document, relief print, silhouette, color block. A photograph clipped into two overlapping rectangles still counts as one asset if it is the same source. Typography, connector lines, dots, dates, and index marks do not count.
+
+Programmatic `color-block` assets accept only `solid`, `sequence`, `boundary`, or `index` as their `motif`. Choose the motif for the card's meaning; do not use an unrecognized value and rely on fallback rendering.
 
 ## Semantic asset gate
 

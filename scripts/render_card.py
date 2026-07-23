@@ -196,7 +196,49 @@ def programmatic_asset(asset: dict, size: tuple[int, int], accent, seed: int) ->
     im = Image.new("RGBA", size, (0, 0, 0, 0))
     d = ImageDraw.Draw(im, "RGBA")
     if kind == "color-block":
-        d.rectangle((w * 0.12, h * 0.14, w * 0.86, h * 0.82), fill=(*accent, 205))
+        left, top, right, bottom = w * 0.12, h * 0.14, w * 0.86, h * 0.82
+        block = [
+            (left, top + h * 0.012),
+            (right - w * 0.008, top),
+            (right, bottom - h * 0.015),
+            (left + w * 0.01, bottom),
+        ]
+        d.polygon(block, fill=(*accent, 205))
+        paper_cut = (*PAPER, 238)
+        motif = asset.get("motif", "solid")
+        if motif == "sequence":
+            y = h * 0.48
+            xs = [w * 0.27, w * 0.49, w * 0.71]
+            d.line((xs[0], y, xs[-1], y), fill=paper_cut, width=max(2, w // 95))
+            for index, x in enumerate(xs):
+                radius = w * (0.055 if index < 2 else 0.075)
+                d.rectangle((x - radius, y - radius, x + radius, y + radius), fill=paper_cut)
+            d.polygon(
+                [(w * 0.70, y - w * 0.11), (w * 0.80, y), (w * 0.70, y + w * 0.11)],
+                fill=paper_cut,
+            )
+        elif motif == "boundary":
+            gap_x = w * 0.54
+            d.rectangle(
+                (gap_x - w * 0.025, top + h * 0.10, gap_x + w * 0.025, bottom - h * 0.10),
+                fill=paper_cut,
+            )
+            for index, length in enumerate((0.18, 0.27, 0.13)):
+                yy = h * (0.34 + index * 0.15)
+                d.line((gap_x - w * length, yy, gap_x - w * 0.06, yy), fill=paper_cut, width=max(2, w // 100))
+                d.line((gap_x + w * 0.06, yy, gap_x + w * (length + 0.06), yy), fill=paper_cut, width=max(2, w // 100))
+        elif motif == "index":
+            for index, width_ratio in enumerate((0.46, 0.31, 0.40, 0.24)):
+                yy = h * (0.31 + index * 0.12)
+                d.rectangle((w * 0.27, yy, w * (0.27 + width_ratio), yy + h * 0.045), fill=paper_cut)
+        for _ in range(12):
+            yy = rng.uniform(top, bottom)
+            x0 = rng.uniform(left, right - w * 0.08)
+            d.line(
+                (x0, yy, min(right, x0 + rng.uniform(w * 0.025, w * 0.10)), yy),
+                fill=(*PAPER, 24),
+                width=1,
+            )
     elif kind == "silhouette":
         points = [(w * 0.08, h * 0.72), (w * 0.28, h * 0.43), (w * 0.46, h * 0.57), (w * 0.68, h * 0.22), (w * 0.92, h * 0.66)]
         d.line(points, fill=(*INK, 255), width=max(3, w // 35), joint="curve")
@@ -265,9 +307,9 @@ def place_two_columns(zone: str, width: int, margin: int, gap: int, asset_width:
     return margin, width - margin - asset_width, text_width
 
 
-def render(spec_path: Path) -> tuple[Path, Path]:
+def render(spec_path: Path, allow_legacy: bool = False) -> tuple[Path, Path]:
     cfg = json.loads(spec_path.read_text(encoding="utf-8"))
-    validation_errors = validate(cfg, spec_path.parent)
+    validation_errors = validate(cfg, spec_path.parent, allow_legacy=allow_legacy, artifact_path=spec_path)
     if validation_errors:
         raise ValueError("Invalid card specification:\n- " + "\n- ".join(validation_errors))
     width, height = int(cfg["width"]), int(cfg["height"])
@@ -393,7 +435,32 @@ def render(spec_path: Path) -> tuple[Path, Path]:
         y = layout_anchor(zone, width, height, box_w, box_h, margin)[1]
         return x, y, on_right
 
-    if landscape:
+    if layout in {"image-above", "text-above"}:
+        cluster_w = int(width * (0.52 if landscape else 0.66))
+        asset_w = int(width * (0.38 if landscape else 0.52))
+        asset_h = int(height * (0.34 if landscape else 0.25))
+        if zone.endswith("left"):
+            tx = margin
+        elif zone.endswith("right"):
+            tx = width - margin - cluster_w
+        else:
+            tx = (width - cluster_w) // 2
+        ax = tx + (cluster_w - asset_w) // 2
+        gap_y = max(int(height * 0.055), int(title_px * 0.9))
+        if layout == "image-above":
+            ay = max(margin, int(height * (0.10 if landscape else 0.16)))
+            paste_asset(0, (ax, ay, asset_w, asset_h))
+            if len(assets) > 1:
+                paste_asset(1, (ax + int(asset_w * 0.66), ay + int(asset_h * 0.66), int(asset_w * 0.32), int(asset_h * 0.30)), 180)
+            draw_copy(tx, ay + asset_h + gap_y, cluster_w, int(cluster_w * 0.92), 4, 7)
+        else:
+            ty = max(margin, int(height * (0.10 if landscape else 0.16)))
+            text_bottom = draw_copy(tx, ty, cluster_w, int(cluster_w * 0.92), 4, 7)
+            ay = min(height - margin - asset_h, text_bottom + gap_y)
+            paste_asset(0, (ax, ay, asset_w, asset_h))
+            if len(assets) > 1:
+                paste_asset(1, (ax + int(asset_w * 0.66), ay + int(asset_h * 0.66), int(asset_w * 0.32), int(asset_h * 0.30)), 180)
+    elif landscape:
         asset_w = int(width * (0.25 if not wide_short else 0.20))
         asset_h = int(height * (0.50 if not wide_short else 0.56))
         text_w = int(width * (0.43 if layout == "text-led-note" else 0.38))
@@ -529,10 +596,12 @@ def render(spec_path: Path) -> tuple[Path, Path]:
 
 
 def main() -> int:
-    if len(sys.argv) != 2:
-        print("Usage: render_card.py card.json", file=sys.stderr)
+    legacy = "--legacy-v0.6" in sys.argv[1:]
+    arguments = [value for value in sys.argv[1:] if value != "--legacy-v0.6"]
+    if len(arguments) != 1:
+        print("Usage: render_card.py [--legacy-v0.6] card.json", file=sys.stderr)
         return 2
-    output, meta = render(Path(sys.argv[1]).resolve())
+    output, meta = render(Path(arguments[0]).resolve(), allow_legacy=legacy)
     print(output)
     print(meta)
     return 0

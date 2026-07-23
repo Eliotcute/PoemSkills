@@ -3,8 +3,10 @@
 
 from __future__ import annotations
 
+import argparse
+import hashlib
 import json
-import sys
+import re
 from pathlib import Path
 
 
@@ -13,12 +15,15 @@ RENDER_MODES = {"final", "draft"}
 CARD_ROLES = {"cover", "interior"}
 LAYOUTS = {
     "archive-collage",
+    "image-above",
     "quiet-specimen",
     "relief-emblem",
     "silhouette-field",
+    "text-above",
     "text-led-note",
 }
 ASSET_TYPES = {"mono-photo", "ticket", "document", "relief-print", "silhouette", "color-block"}
+COLOR_BLOCK_MOTIFS = {"solid", "sequence", "boundary", "index"}
 SEMANTIC_ROLES = {
     "explain",
     "document",
@@ -57,6 +62,8 @@ CLUSTER_ZONES = {
     "lower-left", "lower-center", "lower-right",
 }
 INTERSECTION_MODES = {"transparent-only", "controlled-overlap"}
+CARD_SPEC_CONTRACT = "poem-card-spec/v1"
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
 def chinese_count(value: str) -> int:
@@ -67,7 +74,62 @@ def normalized_copy(value: str) -> str:
     return "".join(str(value).split())
 
 
-def validate(cfg: dict, base_dir: Path | None = None) -> list[str]:
+def file_digest(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def validate_stage_ref(
+    cfg: dict,
+    base_dir: Path | None,
+    ref_field: str,
+    digest_field: str,
+    expected_contract: str,
+    errors: list[str],
+) -> tuple[Path | None, dict | None]:
+    raw_ref = str(cfg.get(ref_field, "")).strip()
+    if not raw_ref:
+        errors.append(f"{ref_field} is required for poem-card-spec/v1")
+        return None, None
+    if base_dir is None:
+        errors.append(f"{ref_field} cannot be verified without the CardSpec base directory")
+        return None, None
+    path = Path(raw_ref)
+    path = path if path.is_absolute() else base_dir / path
+    if not path.is_file():
+        errors.append(f"{ref_field} does not exist: {path}")
+        return path, None
+    expected_digest = file_digest(path)
+    if str(cfg.get(digest_field, "")) != expected_digest:
+        errors.append(f"{digest_field} is stale or belongs to a different {expected_contract}")
+    try:
+        upstream = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        errors.append(f"{ref_field} is not valid JSON: {exc}")
+        return path, None
+    if not isinstance(upstream, dict):
+        errors.append(f"{ref_field} must contain a JSON object")
+        return path, None
+    if upstream.get("contract") != expected_contract:
+        errors.append(f"{ref_field} must reference {expected_contract}")
+    if upstream.get("status") != "validated":
+        errors.append(f"{ref_field} must reference an artifact with status: validated")
+    if expected_contract == "poem-design-plan/v1" and upstream.get("production_ready") is not True:
+        errors.append("design_plan_ref must reference a production-ready DesignPlan")
+    return path, upstream
+
+
+def validate(
+    cfg: dict,
+    base_dir: Path | None = None,
+    allow_legacy: bool = False,
+    artifact_path: Path | None = None,
+) -> list[str]:
+    if not isinstance(cfg, dict):
+        return ["CardSpec must contain a JSON object"]
     errors: list[str] = []
     for field in (
         "card_role", "source_ref", "source_excerpt", "card_claim",
@@ -76,6 +138,64 @@ def validate(cfg: dict, base_dir: Path | None = None) -> list[str]:
     ):
         if field not in cfg:
             errors.append(f"missing required field: {field}")
+
+    contract = cfg.get("contract")
+    if contract is None:
+        if not allow_legacy:
+            errors.append("legacy v0.6 CardSpec requires explicit --legacy-v0.6")
+    else:
+        if contract != CARD_SPEC_CONTRACT:
+            errors.append(f"contract must be {CARD_SPEC_CONTRACT}")
+        if cfg.get("status") != "validated":
+            errors.append("poem-card-spec/v1 requires status: validated")
+        for field in ("content_plan_digest", "design_plan_digest"):
+            if not SHA256_RE.fullmatch(str(cfg.get(field, ""))):
+                errors.append(f"{field} must be a lowercase SHA-256 digest for poem-card-spec/v1")
+        if cfg.get("card_role") == "cover":
+            title_digest = str(cfg.get("title_plan_digest", ""))
+            if not SHA256_RE.fullmatch(title_digest):
+                errors.append("cover specs require title_plan_digest as a lowercase SHA-256 digest")
+        validate_stage_ref(
+            cfg, base_dir, "content_plan_ref", "content_plan_digest",
+            "poem-content-plan/v1", errors,
+        )
+        design_path, design_plan = validate_stage_ref(
+            cfg, base_dir, "design_plan_ref", "design_plan_digest",
+            "poem-design-plan/v1", errors,
+        )
+        if artifact_path is None:
+            errors.append("poem-card-spec/v1 requires its artifact path for DesignPlan membership")
+        elif design_path is not None and design_plan is not None:
+            listed_specs = design_plan.get("card_specs")
+            if not isinstance(listed_specs, list):
+                errors.append("design_plan_ref.card_specs must be a list")
+            else:
+                resolved_specs = {
+                    (Path(str(raw)) if Path(str(raw)).is_absolute() else design_path.parent / str(raw)).resolve()
+                    for raw in listed_specs
+                    if isinstance(raw, str) and raw.strip()
+                }
+                if artifact_path.resolve() not in resolved_specs:
+                    errors.append("CardSpec is not listed in design_plan_ref.card_specs")
+            selected_variant = design_plan.get("selected_variant")
+            variant_id = cfg.get("design_variant_id")
+            if not isinstance(variant_id, str) or not variant_id.strip():
+                errors.append("design_variant_id is required for poem-card-spec/v1")
+            elif variant_id != selected_variant:
+                errors.append("design_variant_id must match design_plan_ref.selected_variant")
+            variants = design_plan.get("variants")
+            selected = next(
+                (variant for variant in variants if isinstance(variant, dict) and variant.get("variant_id") == selected_variant),
+                None,
+            ) if isinstance(variants, list) else None
+            allowed_layouts = selected.get("allowed_layouts") if isinstance(selected, dict) else None
+            if not isinstance(allowed_layouts, list) or cfg.get("layout") not in allowed_layouts:
+                errors.append("layout must be allowed by the selected DesignPlan variant")
+        if cfg.get("card_role") == "cover":
+            validate_stage_ref(
+                cfg, base_dir, "title_plan_ref", "title_plan_digest",
+                "poem-title-plan/v1", errors,
+            )
 
     card_role = cfg.get("card_role")
     if card_role not in CARD_ROLES:
@@ -135,6 +255,8 @@ def validate(cfg: dict, base_dir: Path | None = None) -> list[str]:
             if asset.get("type") not in ASSET_TYPES:
                 errors.append(f"assets[{index}].type must be one of {sorted(ASSET_TYPES)}")
             asset_type = asset.get("type")
+            if asset_type == "color-block" and asset.get("motif", "solid") not in COLOR_BLOCK_MOTIFS:
+                errors.append(f"assets[{index}].motif must be one of {sorted(COLOR_BLOCK_MOTIFS)}")
             role = str(asset.get("semantic_role", "")).strip()
             reason = str(asset.get("semantic_reason", "")).strip()
             if role not in SEMANTIC_ROLES:
@@ -222,12 +344,13 @@ def validate(cfg: dict, base_dir: Path | None = None) -> list[str]:
 
 
 def main() -> int:
-    if len(sys.argv) != 2:
-        print("Usage: validate_card_spec.py card.json", file=sys.stderr)
-        return 2
-    path = Path(sys.argv[1])
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--legacy-v0.6", dest="legacy_v0_6", action="store_true")
+    parser.add_argument("card")
+    args = parser.parse_args()
+    path = Path(args.card)
     cfg = json.loads(path.read_text(encoding="utf-8"))
-    errors = validate(cfg, path.resolve().parent)
+    errors = validate(cfg, path.resolve().parent, allow_legacy=args.legacy_v0_6, artifact_path=path.resolve())
     if errors:
         print("INVALID")
         for error in errors:

@@ -1,98 +1,140 @@
 # PoemSkills 诗歌图文卡片
 
-诗歌般克制，但仍把事情说清楚。把一段中文内容变成可以直接发布的封面和诗性档案卡片，而不是一套换字复用的社交媒体模板。
+诗歌般克制，但仍把事情说清楚。PoemSkills 把中文长文提炼成可发布的小红书与公众号封面、文字卡片和主题配图，并用确定性排版与 QA 保证手机阅读。
 
 ## About
 
-`poemskills`（PoemSkills 诗歌图文卡片）是由[适之 Shizhi](https://github.com/Eliotcute)维护的本地 Codex Skill。它不是自动写诗工具，而是一套“内容先说清楚、视觉再诗意化”的中文编辑卡片系统。项目从 *Whole Earth Catalog* 的独立出版气质、早期互联网的信息组织方式，以及用户提供的极简诗性档案卡片中提取视觉语法，再将它改造成适合中文手机阅读的确定性生产流程。
+`PoemSkills` 是由[适之 Shizhi](https://github.com/Eliotcute)维护的本地 Codex Skill 套件。它不是自动写诗工具，也不是一个万能图片 Prompt；它是一条有明确阶段合同的中文编辑卡片生产线。
 
-Skill 调用名是 `$poemskills`，源码仓库是 [`Eliotcute/PoemSkills`](https://github.com/Eliotcute/PoemSkills)。
+源码仓库：[`Eliotcute/PoemSkills`](https://github.com/Eliotcute/PoemSkills)
 
-它关注的不是对某张参考图进行像素级复刻，而是建立一套可复用、可检查、可版本管理的编辑设计系统：
+系统把“提炼内容、写标题、做设计、渲染图片、发布审查”拆成五个可以单独调用的 Skill。根入口只负责路由和完整流程协调，避免一次加载所有规则后出现模式混淆。
 
-- 使用浅白色纤维纸张，而非黄色、米色或做旧羊皮纸；
-- 以大面积留白、克制宋体层级和小型偏心焦点保持阅读节奏；
-- 让文字与图片产生有意义的空间关系，而非简单套入左右模板；
-- 默认一个视觉素材、最多两个，并要求每个素材直接解释本张卡片的具体论点；
-- 将无文字素材生成、中文确定性排版、像素 QA 和人工视觉评分分开执行；
-- 针对小红书、公众号、横版、竖版及自定义画布分别重新构图，不直接裁切母版。
+## 30 秒开始
 
-这个仓库既包含 Codex 的内容提炼与执行说明，也包含渲染器、语义校验、像素 QA、50 组合回归测试和可复现的视觉基线。系统先把长文整理成封面承诺与逐卡文字稿，再进入视觉设计；主题专属配图和更复杂的材料层次仍是从“可发布”提升到“参考图级别”的主要工作。
+安装后，在 Codex 里直接输入自然语言，不需要先写 JSON：
 
-> 这份 README 面向仓库使用者和维护者。Codex 运行时以 `SKILL.md` 与 `references/` 中的规范为准。
+```text
+使用 $poemskills，把下面长文做成一张封面和五张内页，直接执行到可发布。
 
-## 当前状态
+内容：
+【粘贴长文】
+```
 
-- 功能可靠性：核心规格、渲染、像素 QA 与最终化门禁均有自动回归
-- 多尺寸适配：10 个画布规格 × 5 个布局，50/50 自动回归通过
-- 长文转封面与逐卡文字稿：规格必须记录角色、来源、摘录与准确论点
-- 真实素材样张视觉评分：85.0–85.5/100
-- 本地版本：`v0.6.1`
+只需要一段拿去 ChatGPT 使用的总 Prompt：
 
-`v0.6.1` 统一产品、Skill 和 GitHub 仓库命名为 PoemSkills 诗歌图文卡片，不改变生成行为。`v0.6.0` 将内容优先规则写入可执行规格：每张卡片必须标明封面或内页角色、内容来源、来源摘录与逐卡论点；封面使用独立字号和缩略图门禁。最终化会核对当前规格、PNG、手机预览与像素 QA 的摘要，旧图、旧评分或缺失 QA 不能复用。
+```text
+使用 $poemskills，根据下面的内容给我一段可复制到 ChatGPT 的完整 Prompt，不生成图片。
+
+内容：
+【粘贴长文】
+```
+
+第一种调用会自动走完内容、标题、设计、渲染和审查；审查不通过时优先修最低分项，最多三轮。第二种调用只交付一段完整 Prompt，不会生成 DesignPlan、CardSpec 或图片。
+
+## Skill 架构
+
+| 调用名 | 单一职责 | 主要产物 |
+| --- | --- | --- |
+| `$poemskills` | 判断任务阶段并协调完整工作流 | 下一阶段或完整结果 |
+| `$poem-content` | 提炼长文、证据、边界和逐卡文案 | `ContentPlan` |
+| `$poem-title` | 写封面承诺、准确换行和发布文案包 | `TitlePlan` |
+| `$poem-design` | 选择版式、语义配图并生成卡片规格 | `DesignPlan`、`CardSpec[]` |
+| `$poem-render` | 确定性排中文、渲染 PNG 和像素 QA | `ArtifactManifest` |
+| `$poem-review` | 审查内容、视觉、手机阅读和发布状态 | `ReviewReport` |
+
+完整流程：
+
+```text
+ContentPlan -> TitlePlan -> DesignPlan -> CardSpec[] -> ArtifactManifest -> ReviewReport
+```
+
+纯规划对话可以使用内联 `provisional` 产物；开始生产图片后，阶段产物必须落盘并使用 SHA-256 摘要绑定上游。旧文案、旧规格或旧 QA 不能静默进入新一轮生成。
 
 ## 安装
 
 ```bash
 git clone https://github.com/Eliotcute/PoemSkills.git
-ln -s "$PWD/PoemSkills" "$HOME/.codex/skills/poemskills"
+cd PoemSkills
+python3 scripts/install_skills.py
 ```
 
-重启 Codex 后使用 `$poemskills` 调用。若目标位置已经存在，请保留当前安装并直接更新仓库，不要重复创建链接。
+安装脚本只创建以下软链接，并拒绝覆盖无关目录：
+
+```text
+~/.codex/skills/poemskills
+~/.codex/skills/poem-content
+~/.codex/skills/poem-title
+~/.codex/skills/poem-design
+~/.codex/skills/poem-render
+~/.codex/skills/poem-review
+```
+
+重启 Codex 后使用 `$poemskills`。检查安装：
+
+```bash
+python3 scripts/install_skills.py --check
+```
 
 ## 快速使用
 
-最常用的方式是粘贴长文，先确定“说什么”，再决定“怎么画”：
+不知道该调用哪个阶段：
 
 ```text
-使用 $poemskills。
-我会粘贴一段长文。先不要生成图片。
-
-请先输出：
-1. 内容编辑摘要
-2. 三个封面候选，并选出最强的一条
-3. 封面的准确文案与换行
-4. 一张封面加五张内页的逐卡文字稿
-5. 每张是否需要配图，以及配图为什么与论点有关
-6. 无文字配图提示词和最终卡片合成提示词
-
-要求：
-- 小红书 1242×1660，3:4
-- 浅白纤维莎草纸
-- 低饱和蓝点缀
-- 宋体或明体
-- 手机端可读
-- 不使用参考图里的无关鸟、邮票、坐标或日期
+使用 $poemskills，把下面的长文做成一张封面和五张内页卡片，直接执行到可发布审查。
 
 内容：
-【粘贴内容】
-
-视觉参考：
-【上传参考图】
+【粘贴长文】
 ```
 
-只做一张封面时：
+只提炼文字，不出图：
 
 ```text
-使用 $poemskills，根据这段长文先提炼封面承诺，再直接生成一张小红书 3:4 封面。只生成一张，不要风格对比图。
+使用 $poem-content，把这段长文提炼成封面方向和五张内页文字稿，不做视觉设计。
 ```
 
-需要比较两个方向时才使用样张模式：
+只修改封面和发布标题：
 
 ```text
-使用 $poemskills，内容稿不变，生成两张独立封面样张：一张文字编辑页，一张单色印刷符号。不要拼在同一画布。
+使用 $poem-title，根据已经确认的 ContentPlan 给出三个封面候选、准确换行和三个发布标题。
 ```
 
-只需要可粘贴到 ChatGPT 的提示词时：
+只要视觉方案和 Prompt：
 
 ```text
-使用 $poemskills，只输出“长文提炼为小红书封面与文字卡片”的可复用提示词，不生成图片文件。
+使用 $poem-design，把确认后的文案做成三种内容驱动的版式选择，并输出无文字配图 Prompt 和最终合成 Prompt，不生成图片。
 ```
+
+需要整组逐卡 Prompt 时，每张卡会分别得到素材 Prompt 和合成 Prompt；纯文字卡只有合成 Prompt。不会用一条图片指令生成整组拼版。
+
+直接渲染已有规格：
+
+```text
+使用 $poem-render，渲染 card-01.json 到 card-06.json。每张独立输出，不拼图。
+```
+
+检查并迭代成品：
+
+```text
+使用 $poem-review，检查这组卡片的内容准确性、配图相关性、手机阅读和系列节奏；先报告问题，再修正最低分项。
+```
+
+## 默认视觉系统
+
+- 干净明亮的浅白纤维纸，纹理近看可见但不抢内容；
+- 克制的宋体或明体中文层级；
+- 一个低饱和强调色，覆盖面积通常不超过 5%；
+- 默认一个主题素材，最多两个；
+- 图片必须直接解释、证明、比较或准确象征本张论点；
+- 每张卡片独立输出，禁止双联、宫格和比较板；
+- 以 375 px 手机预览检查标题、正文和层级。
+
+版式不再依赖一个万能模板。系统按卡片职责选择：图片在上文字在下、文字在上图片在下、左右穿插、纯文字编辑页、证据图加边缘注释、来源索引页。相邻卡片必须同时改变视觉机制或焦点区域。
 
 ## 支持规格
 
 | 用途 | 尺寸 |
-|---|---:|
+| --- | ---: |
 | 小红书竖版 | 1242×1660 |
 | 公众号主封面 | 900×383 |
 | 公众号方形封面 | 500×500 |
@@ -104,54 +146,78 @@ ln -s "$PWD/PoemSkills" "$HOME/.codex/skills/poemskills"
 | 3:2 横版 | 1800×1200 |
 | 自定义 | 明确宽高 |
 
-不同尺寸会重新构图，不会直接裁切同一张母版。
+不同尺寸会重新构图，不直接裁切同一母版。
 
-## 生成流程
+## 渲染与审查
 
-1. 区分内容来源、视觉参考和可复用素材。
-2. 从长文提炼主题、核心变化、读者处境、读者收益、最强证据和内容边界。
-3. 生成三个封面候选，选出一条封面承诺。
-4. 将原文拆成卡片序列，并为每张确定唯一核心论点和准确文字稿。
-5. 把参考图拆成纸张、留白、视觉群、文字轴、素材处理和失败禁区的空间合同。
-6. 为素材填写语义角色与具体理由，最终模式要求真实文件路径。
-7. 为每张图建立独立 JSON 规格。
-8. 在规格中记录 `card_role`、`source_ref`、`source_excerpt` 和与标题一致的 `card_claim`。
-9. 校验规格、系列节奏、独立输出路径和素材数量。
-10. 确定性排版中文并输出独立 PNG；封面与内页使用不同字号规则。
-11. 检查安全区、文字碰撞、留白、对比度和手机预览。
-12. 填写十项视觉评分，准确标记最低项并记录修改。
-13. 每项至少 8 分且总分至少 85 分后最终化。
+渲染一个或多个 CardSpec：
 
-如果设计要求文字进入透明剪影或版画的布局区域，必须在 JSON 中显式声明：
+```bash
+python3 scripts/run_pipeline.py card-01.json card-02.json
+```
+
+该命令会校验规格与系列节奏、渲染独立 PNG、生成手机预览、运行像素 QA，并创建待填写的视觉评分文件。生成完成不等于可发布。
+
+检查图片并完成视觉评分后最终化：
+
+```bash
+python3 scripts/run_pipeline.py --finalize card-01.json card-02.json
+```
+
+最终化要求每个视觉类别至少 8/10、总分至少 85/100，且规格、PNG、预览、像素 QA 与视觉评分的摘要全部一致。
+
+## 阶段合同
+
+合同定义见 [`references/stage-contracts.md`](references/stage-contracts.md)。验证示例：
+
+```bash
+python3 scripts/validate_stage_artifact.py content-plan.json --source source.txt
+python3 scripts/validate_stage_artifact.py title-plan.json --upstream content-plan.json
+python3 scripts/validate_stage_artifact.py design-plan.json --upstream content-plan.json title-plan.json
+python3 scripts/validate_stage_artifact.py artifact-manifest.json --upstream card-01.json card-02.json
+```
+
+现有 v0.6 CardSpec 通过显式 `python3 scripts/run_pipeline.py --legacy-v0.6 old-card.json` 保持兼容。缺少合同的规格不会再自动降级。新 CardSpec 使用：
 
 ```json
 {
-  "intentional_intersection": {
-    "mode": "transparent-only",
-    "reason": "让短句穿过素材透明区域，连接图像与核心论点",
-    "asset_indices": [0],
-    "max_opaque_overlap": 0.0
-  }
+  "contract": "poem-card-spec/v1",
+  "status": "validated",
+  "content_plan_ref": "content-plan.json",
+  "content_plan_digest": "sha256...",
+  "title_plan_ref": "title-plan.json",
+  "title_plan_digest": "sha256...",
+  "design_plan_ref": "design-plan.json",
+  "design_plan_digest": "sha256...",
+  "design_variant_id": "selected-variant-id"
 }
 ```
 
-`transparent-only` 不允许文字压住不透明像素；`controlled-overlap` 可以设置小于等于 `0.20` 的保守上限。没有声明的相交仍会被 QA 拒绝。
+## 仓库结构
 
-渲染和像素 QA：
-
-```bash
-python3 scripts/run_pipeline.py card-01.json card-02.json card-03.json
+```text
+PoemSkills/
+├── SKILL.md                    # 薄路由与阶段协调器
+├── skills/
+│   ├── poem-content/
+│   ├── poem-title/
+│   ├── poem-design/
+│   ├── poem-render/
+│   └── poem-review/
+├── agents/openai.yaml
+├── assets/
+├── references/
+└── scripts/
 ```
 
-检查图片并填写生成的 `*.visual-review.json` 后最终化：
+详细视觉规则在 `references/style-system.md`，发布门禁在 `references/visual-quality-rubric.md`，确定性渲染器在 `scripts/render_card.py`。
+
+## 测试
 
 ```bash
-python3 scripts/run_pipeline.py --finalize card-01.json card-02.json card-03.json
-```
-
-运行全部画布与版式回归测试：
-
-```bash
+python3 scripts/test_skill_routes.py
+python3 scripts/test_stage_contracts.py
+python3 scripts/test_layout_contracts.py
 python3 scripts/test_matrix.py
 python3 scripts/test_intentional_intersection.py
 python3 scripts/test_typography.py
@@ -162,121 +228,27 @@ python3 scripts/test_series_contract.py
 python3 scripts/test_finalize_integrity.py
 ```
 
-校验 Skill 结构：
+校验六个 Skill 的结构：
 
 ```bash
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator/scripts/quick_validate.py" .
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator/scripts/quick_validate.py" skills/poem-content
 ```
-
-## 如何把视觉从 85 分提升到 90 分
-
-### 1. 替换程序化占位素材
-
-这是最重要的一步。最终模式已经禁止用程序化植物和路径承担主题内容；要继续提升，必须使用更准确、更有材料感的照片、木刻、剪影或真实档案。
-
-优先级：
-
-1. 用户拥有或授权的真实图片。
-2. 新生成的主题专属无文字版画、剪影或照片。
-3. 有来源记录的公共领域或授权档案素材。
-4. 能明确解释顺序、比较、边界或信号的抽象图形。
-5. 程序化兜底，仅用于抽象结构，并明确告知用户。
-
-### 2. 建立真正的材料层次
-
-参考图不是简单的“白底＋一个图标”。一张卡片通常需要形成一个材料事件，例如：
-
-- 黑白照片与半透明色块交叠；
-- 粗粝版画被中文基线穿过；
-- 不规则剪影与细引线形成方向；
-- 有来源的文档残片与事实说明建立证据关系。
-
-每张最多仍然只使用两个素材。
-
-### 3. 让图文相交，而不是并排
-
-当前渲染器擅长安全、克制的双栏布局。要继续提高，需要增加受控的高级构图规则：
-
-- 标题或短句穿过透明素材，但不影响阅读；
-- 细线从具体图像部位连向解释文字；
-- 图片打断一条文字基线；
-- 同一信息在图像、色块和短注释之间形成三点关系。
-
-不能通过随机重叠制造“设计感”。相交必须帮助理解内容。
-
-### 4. 改善白色纸张质感
-
-纸张仍应一眼看起来是白色。改进方向是增加近看可见的长短纤维、压制纹理和极轻微印刷不均，而不是变黄、加污渍或做旧。
-
-### 5. 手工策划系列节奏
-
-自动 QA 能发现越界和碰撞，但不能判断六张图是否像同一个设计师完成。完整系列应交替变化：
-
-- 素材类型；
-- 图片尺度；
-- 焦点位置；
-- 图文关系；
-- 信息密度。
-
-详细的 100 分制验收标准见 [`references/visual-quality-rubric.md`](references/visual-quality-rubric.md)。单张每项至少 8 分，整组至少 85 分，才算稳定达到发布级。历史 `v0.2` 的 76 分基线及逐项得分保留在 [`references/visual-baseline-v0.2.md`](references/visual-baseline-v0.2.md)。
 
 ## 核心约束
 
-- 每张卡片独立输出，禁止双联、宫格和对比板。
-- 上传视觉参考不会自动触发两张样张；只做封面时默认只输出一张。
-- 封面先表达读者收益，内页再解释论点；不得用漂亮排版代替内容提炼。
-- 默认一个素材，最多两个。
-- 邮票、票据、日期、坐标、路线和档案编号只能在来源真实支持时出现。
-- 不在图像模型中排长篇中文；中文由确定性渲染器排版。
-- 不模仿或复制具体参考作品、Logo、页面和受版权保护插图。
-- 纸张保持浅白，不使用黄色、米色、污渍、烧焦边或重度做旧。
-
-## 仓库结构
-
-```text
-PoemSkills/
-├── SKILL.md
-├── README.md
-├── agents/openai.yaml
-├── assets/
-├── references/
-└── scripts/
-```
-
-- `SKILL.md`：Codex 的核心执行流程。
-- `references/style-system.md`：视觉系统。
-- `references/visual-quality-rubric.md`：人工视觉验收标准。
-- `references/illustration-prompts.md`：无文字配图提示词。
-- `scripts/render_card.py`：确定性 PNG 渲染器。
-- `scripts/qa_card.py`：像素和版面 QA。
-- `scripts/validate_visual_review.py`：85 分视觉交付门禁。
-- `scripts/test_matrix.py`：50 组合回归测试。
-- `scripts/test_intentional_intersection.py`：受控相交正反回归测试。
-- `scripts/test_typography.py`：中英文换行与中文微文字测试。
-- `scripts/test_asset_gate.py`：最终素材路径门槛测试。
-- `scripts/test_visual_review.py`：视觉评分门禁测试。
-- `scripts/test_content_contract.py`：封面/内页、来源绑定和封面字号测试。
-- `scripts/test_series_contract.py`：相邻节奏和独立输出路径测试。
-- `scripts/test_finalize_integrity.py`：规格、像素 QA 与最终化摘要绑定测试。
+- 先明确内容，再写标题，再决定视觉；
+- 封面是继续滑动的承诺，不是全文摘要；
+- 一张内页只讲一个论点；
+- 不为气氛添加无关素材、虚构日期、坐标、票据或档案；
+- 中文由确定性排版完成，不交付错字或乱码；
+- 未通过当前像素 QA 和视觉审查的图片不能标记为可发布。
 
 ## 本地 Git
-
-查看状态与历史：
 
 ```bash
 git status
 git log --oneline --decorate
 ```
 
-提交修改：
-
-```bash
-git add .
-git commit -m "feat: describe the change"
-```
-
-发布新的本地版本：
-
-```bash
-git tag -a vX.Y.Z -m "Describe this local release"
-```
+最近公开版本标签为 `v0.6.1`。这套模块化结构将作为下一版本发布。

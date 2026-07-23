@@ -74,7 +74,7 @@ def write_case(root: Path, name: str, asset_path: Path, mode: str, limit: float)
 
 def main() -> int:
     python = sys.executable
-    with tempfile.TemporaryDirectory(prefix="whole-earth-intersection-") as raw_root:
+    with tempfile.TemporaryDirectory(prefix="poemskills-intersection-") as raw_root:
         root = Path(raw_root)
         asset_path = root / "transparent-asset.png"
         asset = Image.new("RGBA", (240, 160), (0, 0, 0, 0))
@@ -86,7 +86,7 @@ def main() -> int:
             root, "transparent-pass", asset_path, "transparent-only", 0.0
         )
         validator = subprocess.run(
-            [python, str(SCRIPT_DIR / "validate_card_spec.py"), str(transparent_spec)],
+            [python, str(SCRIPT_DIR / "validate_card_spec.py"), "--legacy-v0.6", str(transparent_spec)],
             text=True, capture_output=True,
         )
         transparent_result = subprocess.run(

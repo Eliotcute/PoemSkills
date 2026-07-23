@@ -24,7 +24,7 @@ def main() -> int:
     python = sys.executable
     cases: list[dict[str, object]] = []
     keep_dir = os.environ.get("WHOLE_EARTH_MATRIX_DIR")
-    context = None if keep_dir else tempfile.TemporaryDirectory(prefix="whole-earth-card-matrix-")
+    context = None if keep_dir else tempfile.TemporaryDirectory(prefix="poemskills-card-matrix-")
     raw_dir = keep_dir or context.name
     try:
         root = Path(raw_dir)
@@ -74,7 +74,7 @@ def main() -> int:
                 spec_path = root / f"{case_id}.json"
                 spec_path.write_text(json.dumps(spec, ensure_ascii=False, indent=2), encoding="utf-8")
                 result = subprocess.run(
-                    [python, str(SCRIPT_DIR / "run_pipeline.py"), str(spec_path)],
+                    [python, str(SCRIPT_DIR / "run_pipeline.py"), "--legacy-v0.6", str(spec_path)],
                     text=True,
                     capture_output=True,
                 )

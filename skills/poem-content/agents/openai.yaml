@@ -1,0 +1,4 @@
+interface:
+  display_name: "Poem Content 内容提炼"
+  short_description: "为 PoemSkills 提炼长文、读者收益、证据边界与逐卡文字稿"
+  default_prompt: "使用 $poem-content，把这段长文提炼成 PoemSkills 内容计划和逐卡文字稿。"

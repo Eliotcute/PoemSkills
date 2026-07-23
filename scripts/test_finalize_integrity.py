@@ -19,7 +19,7 @@ CATEGORIES = (
 
 
 def run(spec: Path, finalize: bool = False) -> subprocess.CompletedProcess[str]:
-    args = [sys.executable, str(SCRIPT_DIR / "run_pipeline.py")]
+    args = [sys.executable, str(SCRIPT_DIR / "run_pipeline.py"), "--legacy-v0.6"]
     if finalize:
         args.append("--finalize")
     args.append(str(spec))
@@ -52,6 +52,14 @@ def main() -> int:
         spec = root / "cover.json"
         spec.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
         rendered = run(spec)
+        try:
+            rendered_manifest = json.loads(rendered.stdout)
+        except json.JSONDecodeError:
+            rendered_manifest = {}
+        manifest_path = root / "artifact-manifest.json"
+        manifest_written = manifest_path.is_file()
+        qa_path = root / "cover.png.qa.json"
+        qa = json.loads(qa_path.read_text(encoding="utf-8")) if qa_path.exists() else {}
 
         review_path = root / "cover.png.visual-review.json"
         review = json.loads(review_path.read_text(encoding="utf-8"))
@@ -63,6 +71,13 @@ def main() -> int:
             "approved": True,
         })
         review_path.write_text(json.dumps(review, ensure_ascii=False, indent=2), encoding="utf-8")
+        layout_path = root / "cover.png.layout.json"
+        original_layout = layout_path.read_text(encoding="utf-8")
+        layout = json.loads(original_layout)
+        layout["tampered_after_qa"] = True
+        layout_path.write_text(json.dumps(layout, ensure_ascii=False, indent=2), encoding="utf-8")
+        stale_layout = run(spec, finalize=True)
+        layout_path.write_text(original_layout, encoding="utf-8")
         finalized = run(spec, finalize=True)
 
         payload["source_excerpt"] = "修改后的来源摘录仍然有效，但已不再对应原来的像素检查。"
@@ -74,10 +89,23 @@ def main() -> int:
         (root / "cover.png.qa.json").unlink()
         missing_qa = run(spec, finalize=True)
 
-    valid = rendered.returncode == 0 and finalized.returncode == 0 and stale_spec.returncode != 0 and missing_qa.returncode != 0
+    valid = (
+        rendered.returncode == 0
+        and rendered_manifest.get("contract") == "poem-artifact-manifest/v1"
+        and manifest_written
+        and bool(qa.get("layout_sha256"))
+        and stale_layout.returncode != 0
+        and finalized.returncode == 0
+        and stale_spec.returncode != 0
+        and missing_qa.returncode != 0
+    )
     print(json.dumps({
         "valid": valid,
         "render_passed": rendered.returncode == 0,
+        "stdout_is_manifest_json": rendered_manifest.get("contract") == "poem-artifact-manifest/v1",
+        "manifest_written": manifest_written,
+        "layout_bound_to_qa": bool(qa.get("layout_sha256")),
+        "stale_layout_rejected": stale_layout.returncode != 0,
         "finalize_passed": finalized.returncode == 0,
         "stale_spec_rejected": stale_spec.returncode != 0,
         "missing_qa_rejected": missing_qa.returncode != 0,

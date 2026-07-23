@@ -1,0 +1,4 @@
+interface:
+  display_name: "Poem Review 卡片审查"
+  short_description: "审查 PoemSkills 卡片的内容、配图、排版、手机阅读与发布状态"
+  default_prompt: "使用 $poem-review，检查这组 PoemSkills 卡片并指出是否可以发布。"

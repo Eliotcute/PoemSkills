@@ -1,0 +1,4 @@
+interface:
+  display_name: "Poem Design 卡片设计"
+  short_description: "为 PoemSkills 规划卡片版式、语义配图、参考合同与生成提示词"
+  default_prompt: "使用 $poem-design，把已确认文案转成 PoemSkills 视觉方案和配图提示词。"

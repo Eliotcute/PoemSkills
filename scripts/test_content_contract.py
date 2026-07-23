@@ -48,13 +48,23 @@ def main() -> int:
     long_cover["title"] = long_cover["card_claim"] = "这是一个明显超过封面正常长度而且无法快速理解的标题"
     single_line = copy.deepcopy(base)
     single_line["title"] = "把注意力还给重要的事"
+    bound_spec = copy.deepcopy(base)
+    bound_spec.update({
+        "contract": "poem-card-spec/v1",
+        "status": "validated",
+        "content_plan_digest": "a" * 64,
+        "title_plan_digest": "b" * 64,
+        "design_plan_digest": "c" * 64,
+    })
+    stale_bound_spec = copy.deepcopy(bound_spec)
+    stale_bound_spec["title_plan_digest"] = "missing"
 
     with tempfile.TemporaryDirectory(prefix="poemskills-content-contract-") as raw_root:
         root = Path(raw_root)
         spec_path = root / "cover.json"
         spec_path.write_text(json.dumps(base, ensure_ascii=False, indent=2), encoding="utf-8")
         result = subprocess.run(
-            [sys.executable, str(SCRIPT_DIR / "run_pipeline.py"), str(spec_path)],
+            [sys.executable, str(SCRIPT_DIR / "run_pipeline.py"), "--legacy-v0.6", str(spec_path)],
             text=True,
             capture_output=True,
         )
@@ -62,11 +72,15 @@ def main() -> int:
         qa = json.loads((root / "cover.png.qa.json").read_text(encoding="utf-8")) if result.returncode == 0 else {}
 
     valid = (
-        not validate(base)
-        and bool(validate(missing_role))
-        and bool(validate(wrong_claim))
-        and bool(validate(long_cover))
-        and bool(validate(single_line))
+        bool(validate([]))
+        and not validate(base, allow_legacy=True)
+        and bool(validate(base))
+        and bool(validate(missing_role, allow_legacy=True))
+        and bool(validate(wrong_claim, allow_legacy=True))
+        and bool(validate(long_cover, allow_legacy=True))
+        and bool(validate(single_line, allow_legacy=True))
+        and bool(validate(bound_spec))
+        and bool(validate(stale_bound_spec))
         and result.returncode == 0
         and meta.get("card_role") == "cover"
         and meta.get("font_sizes", {}).get("title", 0) >= 68
@@ -74,11 +88,15 @@ def main() -> int:
     )
     print(json.dumps({
         "valid": valid,
-        "valid_cover_accepted": not validate(base),
-        "missing_role_rejected": bool(validate(missing_role)),
-        "claim_mismatch_rejected": bool(validate(wrong_claim)),
-        "long_cover_rejected": bool(validate(long_cover)),
-        "single_line_xhs_cover_rejected": bool(validate(single_line)),
+        "non_object_rejected": bool(validate([])),
+        "legacy_cover_accepted_with_flag": not validate(base, allow_legacy=True),
+        "legacy_without_flag_rejected": bool(validate(base)),
+        "missing_role_rejected": bool(validate(missing_role, allow_legacy=True)),
+        "claim_mismatch_rejected": bool(validate(wrong_claim, allow_legacy=True)),
+        "long_cover_rejected": bool(validate(long_cover, allow_legacy=True)),
+        "single_line_xhs_cover_rejected": bool(validate(single_line, allow_legacy=True)),
+        "v1_without_stage_refs_rejected": bool(validate(bound_spec)),
+        "invalid_digest_rejected": bool(validate(stale_bound_spec)),
         "cover_title_px": meta.get("font_sizes", {}).get("title"),
         "thumbnail_title_px": qa.get("metrics", {}).get("thumbnail_title_px"),
     }, ensure_ascii=False, indent=2))

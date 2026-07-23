@@ -1,146 +1,106 @@
-# Content-first workflow
+# Content-first editorial workflow
 
-Use this workflow whenever the input contains a long passage, article, transcript, research note, or screenshot with substantial copy. The visual system begins only after the content has a clear editorial structure.
+Use this reference only for `$poem-content`. It turns long Chinese source material into a source-faithful `ContentPlan`; it does not write final cover titles, choose layouts, or generate images.
 
 ## 1. Separate source roles
 
 Label every input as one of:
 
-- `content source`: facts, arguments, examples, names, and wording that may appear in the cards;
-- `visual reference`: composition, paper, typography, image treatment, and pacing only;
-- `reusable asset`: a user-owned or authorized image that may appear in the final work.
+- `content_source`: facts, arguments, examples, names, and wording that may appear in cards;
+- `visual_reference`: appearance only, never evidence for a claim;
+- `reusable_asset`: a user-owned or authorized image or file.
 
-Do not copy objects or metadata from a visual reference into the content. A bird, ticket, coordinate, date, place name, stamp, or English label is invalid unless the content source supports it.
+Do not import objects, labels, dates, or facts from a visual reference into content.
 
-## 2. Build the editorial brief
+## 2. Establish source boundaries
 
-Extract the following before writing cover copy:
+Record:
+
+- source name or user-provided identifier;
+- exact source text or a stable local path;
+- SHA-256 digest when the plan will continue downstream;
+- names, dates, numbers, causal claims, and quotations that require exact preservation;
+- claims the source does not establish.
+
+If the source has no clear conclusion, choose the smallest defensible claim. Do not manufacture a dramatic change.
+
+## 3. Build the editorial brief
+
+Extract:
+
+- output scope: `cover-only`, `cover-plus-interiors`, or `interiors-only`;
 
 | Field | Requirement |
-|---|---|
+| --- | --- |
 | Topic | One factual sentence |
-| Central change | What becomes different after reading this |
-| Reader tension | The question, frustration, misconception, or opportunity already felt by the audience |
+| Central change | What becomes different after reading |
+| Reader tension | Existing question, frustration, misconception, or opportunity |
 | Reader payoff | What the reader can understand, decide, or do |
-| Strongest evidence | One source-backed example, mechanism, result, or comparison |
-| Boundaries | What the source does not prove and what must not be invented |
-| Desired action | Save, try, compare, discuss, or continue reading |
+| Strongest evidence | One concrete mechanism, case, result, or comparison |
+| Boundaries | What must not be inferred or invented |
+| Desired action | Continue, save, try, compare, discuss, or verify |
+| Cover direction | One angle only; not final cover wording |
 
-If the source has no clear claim, say so and propose the smallest defensible claim. Do not manufacture a dramatic conclusion.
+Prefer concrete nouns and verbs from the source. Remove throat-clearing, repeated setup, generic encouragement, and unsupported conclusions.
 
-## 3. Write the cover promise
+## 4. Extract claims before cards
 
-The cover earns the next swipe. It does not summarize every card.
+List every distinct claim in the source. For each claim record:
 
-Write three candidates using different angles:
+- exact source excerpt or faithful source summary;
+- evidence type;
+- reader value;
+- dependencies on earlier claims;
+- whether it can stand alone.
 
-1. `direct value`: what the reader will learn or gain;
-2. `change or contrast`: before versus after, old assumption versus new reality;
-3. `specific mechanism`: the concrete tool, process, event, or observation that makes the content distinctive.
+Merge duplicates. Remove claims that merely restate the topic. Order remaining claims so a reader can follow them without the original source.
 
-Then select one. The selected line must be:
+## 5. Build the swipe sequence
 
-- source-faithful;
-- understandable without the caption;
-- specific enough that it could not title an unrelated post;
-- normally 8–18 Chinese characters;
-- free of empty commands such as “一定要看”, “建议收藏”, “颠覆认知”, or “真相来了”.
+Default to five interior cards when the user requests a set without a count. For `cover-only`, keep the interior-card list empty. Choose only roles the source supports:
 
-An optional subtitle may clarify the subject in 12–28 Chinese characters. Do not put the whole argument on the cover.
+- `context`: why this matters now;
+- `claim`: the central assertion;
+- `mechanism`: how or why it works;
+- `evidence`: concrete example, comparison, result, or source object;
+- `use`: action, checklist, limitation, or decision;
+- `source`: provenance, boundary, or continuation.
 
-## 4. Turn the source into a swipe sequence
+Each card needs:
 
-Default to one cover plus five interior cards when the user requests a set without a count.
+- one unique claim;
+- a 12-28-character core sentence;
+- normally 35-90 supporting Chinese characters;
+- one source excerpt;
+- one reason to exist;
+- no repeated function from the preceding card.
 
-Use only the steps the source supports:
+Do not write the final cover title here. The cover direction becomes input to `$poem-title`.
 
-1. `cover`: promise and subject;
-2. `context`: why this matters now;
-3. `claim`: the central idea;
-4. `mechanism`: how it works;
-5. `evidence`: example, screenshot, comparison, or result;
-6. `use`: action, checklist, limitation, or conclusion.
+## 6. Decide whether content needs an image
 
-Each interior card must contain:
+Only classify the semantic need; do not art-direct the image.
 
-- one claim that can stand alone;
-- a 12–28-character core sentence;
-- 35–90 Chinese characters of explanation when needed;
-- one reason to exist in the sequence;
-- no repeated claim from the previous card.
+Allowed roles:
 
-Prefer concrete nouns and verbs from the source. Remove throat-clearing, repeated setup, generic encouragement, and conclusions unsupported by evidence.
+- `explain` a mechanism;
+- `document` a source-backed object or event;
+- `compare` two states;
+- `locate` a real place or object;
+- `sequence` a process;
+- `symbolize-specific-idea` when no literal evidence is viable.
 
-## 5. Decide whether an image is necessary
+Use `none` when text is sufficient. Reject “create atmosphere” as an image reason.
 
-Text is the primary content. Add an image only when it performs one of these roles:
+## 7. Deliver and validate
 
-- proves or documents a claim;
-- explains a mechanism;
-- compares two states;
-- locates a real place or object;
-- symbolizes one specific idea that would otherwise be difficult to grasp.
+Return a readable brief and card table, then write `poem-content-plan/v1` when another stage follows. The artifact must match `references/stage-contracts.md`.
 
-No image is better than a generic image. Reject decorative birds, leaves, stamps, paths, maps, browser icons, robotic hands, or fake documents that can be swapped into another topic unchanged.
+Reject the plan when:
 
-For each proposed asset, write:
-
-- `asset`;
-- `source sentence`;
-- `semantic role`;
-- `why this asset and not a generic substitute`;
-- `source basis`.
-
-## 6. Choose one cover system
-
-### Editorial explanation
-
-Use for tools, arguments, analysis, cases, and instructional content.
-
-- pale-white fibrous paper;
-- 60%–78% quiet space;
-- a two-to-four-line cover promise at clear phone-reading scale;
-- optional relevant monochrome image occupying 20%–38% of the page;
-- support line, index, fine rule, and one muted blue mark;
-- text and image share an alignment, connector, crop edge, or controlled overlap.
-
-### Printed symbol
-
-Use when the source contains one strong visual metaphor, object, mechanism, or transformation.
-
-- pale-white fibrous paper, never dirty beige;
-- one rough printed block occupying 20%–30% of the width;
-- inside the block, one topic-specific cutout or negative-space symbol;
-- two or three short annotations taken from the source vocabulary;
-- one short Chinese cover line or proposition;
-- one low-saturation accent: faded blue, brick red, olive, or gray violet.
-
-Do not copy the bird or the words `shore`, `pause`, or `wing` from a reference. Generate a symbol inseparable from the actual topic.
-
-## 7. Prompt-only output order
-
-When the user asks for a prompt, deliver one reusable prompt that forces this order:
-
-1. editorial brief;
-2. three cover candidates and one selection;
-3. exact cover copy;
-4. exact cover hierarchy or carousel script table, according to the requested scope;
-5. visual reference contract;
-6. asset decision and semantic rationale;
-7. text-free asset-generation prompt when needed;
-8. final composition prompt with exact Chinese text and line breaks;
-9. Xiaohongshu title, caption, and hashtags.
-
-The prompt must say “do not generate images immediately.” The model first returns the content and design plan. It generates only the requested cover or cards after approval, unless the user explicitly says to start directly.
-
-## 8. Reject these outputs
-
-- two style samples when the user asked for one cover;
-- an attractive card that fails to explain the source;
-- a sparse quote card with no reader payoff;
-- a cover filled with the source paragraph;
-- a card series whose claims are interchangeable or repetitive;
-- a generated picture with Chinese text baked in and misspelled;
-- unrelated archival decoration;
-- invented metadata;
-- a warm, stained, antique parchment look when the requested paper is clean white.
+- a card has no source excerpt;
+- two cards make the same claim;
+- the reader payoff is only mood;
+- evidence is replaced by an attractive metaphor;
+- a fact or outcome is stronger than the source;
+- the plan already contains visual layout instructions.

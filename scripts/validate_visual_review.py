@@ -32,6 +32,8 @@ def file_digest(path: Path) -> str:
 
 
 def validate(review: dict) -> list[str]:
+    if not isinstance(review, dict):
+        return ["visual review must contain a JSON object"]
     errors: list[str] = []
     if review.get("status") != "approved":
         errors.append("status must be approved after visual inspection")

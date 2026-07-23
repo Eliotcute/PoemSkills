@@ -3,11 +3,14 @@
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import subprocess
 import sys
 from pathlib import Path
+
+from validate_stage_artifact import combined_digest
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -26,7 +29,13 @@ REVIEW_CATEGORIES = (
 
 
 def run(command: list[str]) -> None:
-    subprocess.run(command, check=True)
+    result = subprocess.run(command, text=True, capture_output=True)
+    if result.returncode != 0:
+        if result.stdout:
+            print(result.stdout, file=sys.stderr, end="")
+        if result.stderr:
+            print(result.stderr, file=sys.stderr, end="")
+        raise subprocess.CalledProcessError(result.returncode, command)
 
 
 def review_path_for(output: Path) -> Path:
@@ -56,16 +65,19 @@ def write_pending_review(path: Path, image: Path, preview: Path) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def validate_finalized_qa(qa_path: Path, spec: Path, image: Path, preview: Path) -> None:
+def validate_finalized_qa(qa_path: Path, spec: Path, image: Path, preview: Path, layout: Path) -> None:
     if not qa_path.exists():
         raise FileNotFoundError(f"pixel QA report is required before finalizing: {qa_path}")
     report = json.loads(qa_path.read_text(encoding="utf-8"))
+    if not isinstance(report, dict):
+        raise ValueError(f"pixel QA report must contain a JSON object: {qa_path}")
     if report.get("valid") is not True:
         raise ValueError(f"pixel QA did not pass: {qa_path}")
     expected = {
         "spec_sha256": file_digest(spec),
         "image_sha256": file_digest(image),
         "preview_sha256": file_digest(preview),
+        "layout_sha256": file_digest(layout),
     }
     for field, digest in expected.items():
         if report.get(field) != digest:
@@ -73,17 +85,24 @@ def validate_finalized_qa(qa_path: Path, spec: Path, image: Path, preview: Path)
 
 
 def main() -> int:
-    finalize = "--finalize" in sys.argv[1:]
-    arguments = [value for value in sys.argv[1:] if value != "--finalize"]
-    if not arguments:
-        print("Usage: run_pipeline.py [--finalize] card-01.json [card-02.json ...]", file=sys.stderr)
-        return 2
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--finalize", action="store_true")
+    parser.add_argument("--legacy-v0.6", dest="legacy_v0_6", action="store_true")
+    parser.add_argument("--manifest", type=Path)
+    parser.add_argument("cards", nargs="+")
+    args = parser.parse_args()
+    finalize = args.finalize
+    legacy = args.legacy_v0_6
 
-    specs = [Path(name).resolve() for name in arguments]
+    specs = [Path(name).resolve() for name in args.cards]
     python = sys.executable
     resolved_outputs: list[Path] = []
     for spec in specs:
-        run([python, str(SCRIPT_DIR / "validate_card_spec.py"), str(spec)])
+        validate_command = [python, str(SCRIPT_DIR / "validate_card_spec.py")]
+        if legacy:
+            validate_command.append("--legacy-v0.6")
+        validate_command.append(str(spec))
+        run(validate_command)
         cfg = json.loads(spec.read_text(encoding="utf-8"))
         output = Path(str(cfg["output"]))
         resolved_outputs.append(output if output.is_absolute() else (spec.parent / output).resolve())
@@ -100,13 +119,18 @@ def main() -> int:
         preview = output.with_name(output.stem + "-preview" + output.suffix)
         review = review_path_for(output)
         qa = output.with_suffix(output.suffix + ".qa.json")
+        layout = output.with_suffix(output.suffix + ".layout.json")
         if finalize:
-            if not output.exists() or not preview.exists():
+            if not output.exists() or not preview.exists() or not layout.exists():
                 raise FileNotFoundError(f"render and inspect the card before finalizing: {output}")
-            validate_finalized_qa(qa, spec, output, preview)
+            validate_finalized_qa(qa, spec, output, preview, layout)
             run([python, str(SCRIPT_DIR / "validate_visual_review.py"), str(review)])
         else:
-            run([python, str(SCRIPT_DIR / "render_card.py"), str(spec)])
+            render_command = [python, str(SCRIPT_DIR / "render_card.py")]
+            if legacy:
+                render_command.append("--legacy-v0.6")
+            render_command.append(str(spec))
+            run(render_command)
             run([python, str(SCRIPT_DIR / "qa_card.py"), str(spec), str(output)])
             write_pending_review(review, output, preview)
         outputs.append(
@@ -115,11 +139,19 @@ def main() -> int:
                 "image": str(output),
                 "preview": str(preview),
                 "qa": str(qa),
+                "qa_sha256": file_digest(qa),
+                "layout": str(layout),
+                "layout_sha256": file_digest(layout),
                 "visual_review": str(review),
+                "visual_review_sha256": file_digest(review),
             }
         )
 
-    print(json.dumps({
+    manifest_path = args.manifest.expanduser().resolve() if args.manifest else specs[0].parent / "artifact-manifest.json"
+    manifest = {
+        "contract": "poem-artifact-manifest/v1",
+        "status": "validated",
+        "card_specs_digest": combined_digest(specs),
         "valid": True,
         "rendered": not finalize,
         "finalized": finalize,
@@ -127,7 +159,10 @@ def main() -> int:
         "deliverable": finalize,
         "visual_review_required": not finalize,
         "outputs": outputs,
-    }, ensure_ascii=False, indent=2))
+    }
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(json.dumps(manifest, ensure_ascii=False, indent=2))
     return 0
 
 

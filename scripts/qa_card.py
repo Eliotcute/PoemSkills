@@ -165,6 +165,7 @@ def main() -> int:
         "spec_sha256": file_digest(spec_path),
         "image_sha256": file_digest(image_path),
         "preview_sha256": file_digest(preview_path),
+        "layout_sha256": file_digest(meta_path),
         "errors": errors,
         "warnings": warnings,
         "metrics": {

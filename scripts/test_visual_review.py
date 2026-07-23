@@ -30,7 +30,7 @@ def review(score: float, image: Path, preview: Path, approved: bool = True) -> d
 
 
 def main() -> int:
-    with tempfile.TemporaryDirectory(prefix="whole-earth-visual-review-") as raw_root:
+    with tempfile.TemporaryDirectory(prefix="poemskills-visual-review-") as raw_root:
         root = Path(raw_root)
         image, preview = root / "card.png", root / "card-preview.png"
         image.write_bytes(b"image")
@@ -50,7 +50,8 @@ def main() -> int:
         image.write_bytes(b"image")
 
         valid = (
-            not validate(passing)
+            bool(validate([]))
+            and not validate(passing)
             and bool(validate(low_category))
             and bool(validate(low_total))
             and bool(validate(pending))
@@ -60,6 +61,7 @@ def main() -> int:
         )
         print(json.dumps({
             "valid": valid,
+            "non_object_rejected": bool(validate([])),
             "passing_review": not validate(passing),
             "low_category_rejected": bool(validate(low_category)),
             "low_total_rejected": bool(validate(low_total)),
